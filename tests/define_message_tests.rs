@@ -126,18 +126,40 @@ mod tests {
     }
 
     #[test]
-    fn test_define_message_with_full_variant() {
+    fn test_fully_qualified_human_message_getters() {
         define_message!(MessageType::Human);
-        let msg = HumanMessage::new("Hello, Human!");
+        let mut human_message = HumanMessage::new("Hello, Human!");
 
-        assert_eq!(msg.content(), "Hello, Human!");
+        assert_eq!(human_message.content(), "Hello, Human!");
+        assert!(!human_message.is_example());
+        assert!(human_message.additional_kwargs().is_empty());
+        assert!(human_message.response_metadata().is_empty());
+        assert_eq!(human_message.id(), None);
+        assert_eq!(human_message.name(), None);
+        assert_eq!(human_message.message_type(), MessageType::Human);
 
-        assert_eq!(msg.message_type(), MessageType::Human);
+        human_message.base.example = true;
+        human_message
+            .base
+            .additional_kwargs
+            .insert("key".to_string(), "value".to_string());
+        human_message
+            .base
+            .response_metadata
+            .insert("metadata_key".to_string(), "metadata_value".to_string());
+        human_message.base.id = Some("12345".to_string());
+        human_message.base.name = Some("Test User".to_string());
 
-        assert!(!msg.base.example);
-        assert!(msg.base.additional_kwargs.is_empty());
-        assert!(msg.base.response_metadata.is_empty());
-        assert!(msg.base.id.is_none());
-        assert!(msg.base.name.is_none());
+        assert!(human_message.is_example());
+        assert_eq!(
+            human_message.additional_kwargs().get("key"),
+            Some(&"value".to_string())
+        );
+        assert_eq!(
+            human_message.response_metadata().get("metadata_key"),
+            Some(&"metadata_value".to_string())
+        );
+        assert_eq!(human_message.id(), Some("12345"));
+        assert_eq!(human_message.name(), Some("Test User"));
     }
 }
