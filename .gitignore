@@ -1,0 +1,36 @@
+# Ignore Cargo's artifacts
+/target/
+/**/*.rs.bk
+
+# Ignore package managers lockfiles and generated files
+Cargo.lock
+
+# Ignore IDE-specific files (for Visual Studio Code)
+.vscode/
+*.code-workspace
+
+# Ignore JetBrains IDEs (e.g., IntelliJ, CLion) settings
+.idea/
+*.iml
+
+# Ignore backup files created by the editor
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# Ignore Rust Analyzer files
+rust-project.json
+
+# Ignore debug logs, crash reports, etc.
+*.log
+*.out
+*.stderr
+*.stdout
+
+# Ignore node_modules if using Node.js in the project
+node_modules/
+
+# Ignore dotenv files if using environment variables
+.env
+.env.*
