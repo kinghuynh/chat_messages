@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 #[derive(Debug)]
 pub struct BaseMessageFields {
@@ -15,6 +15,28 @@ pub enum MessageType {
     Human,
     AI,
     System,
+}
+
+#[derive(Debug)]
+pub struct InvalidMessageTypeError;
+
+impl fmt::Display for InvalidMessageTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Invalid message type")
+    }
+}
+
+impl TryFrom<&str> for MessageType {
+    type Error = InvalidMessageTypeError;
+
+    fn try_from(s: &str) -> Result<MessageType, InvalidMessageTypeError> {
+        match s {
+            "Human" => Ok(MessageType::Human),
+            "AI" => Ok(MessageType::AI),
+            "System" => Ok(MessageType::System),
+            _ => Err(InvalidMessageTypeError),
+        }
+    }
 }
 
 pub trait BaseMessage {
