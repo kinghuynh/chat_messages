@@ -6,6 +6,7 @@ macro_rules! define_message {
 
     ($message_type_enum:expr) => {
         paste::item! {
+            #[derive(Debug, Serialize, Deserialize)]
             pub struct [<$message_type_enum Message>] {
                 pub base: BaseMessageFields,
             }

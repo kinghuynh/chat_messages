@@ -1,4 +1,3 @@
-use crate::base_message::{BaseMessage, BaseMessageFields, MessageType, MessageType::AI};
-use crate::define_message;
+use crate::prelude::*;
 
 define_message!(AI);

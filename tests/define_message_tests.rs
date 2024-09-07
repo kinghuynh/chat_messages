@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use chat_messages::{define_message, BaseMessage, BaseMessageFields, MessageType};
-
-    use MessageType::*;
+    use chat_messages::prelude::*;
 
     define_message!(Human);
     define_message!(AI);
