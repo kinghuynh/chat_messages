@@ -127,6 +127,7 @@ mod tests {
 
     #[test]
     fn test_define_message_with_full_variant() {
+        define_message!(MessageType::Human);
         let msg = HumanMessage::new("Hello, Human!");
 
         assert_eq!(msg.content(), "Hello, Human!");
