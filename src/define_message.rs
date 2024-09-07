@@ -1,5 +1,9 @@
 #[macro_export]
 macro_rules! define_message {
+    (MessageType::$message_type_enum:ident) => {
+        define_message!($message_type_enum);
+    };
+
     ($message_type_enum:expr) => {
         paste::item! {
             pub struct [<$message_type_enum Message>] {
