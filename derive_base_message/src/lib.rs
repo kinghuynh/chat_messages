@@ -1,5 +1,6 @@
 mod derive_macro;
-mod field;
+mod fields;
+mod methods;
 
 use derive_macro::derive_macro;
 use proc_macro::TokenStream;
