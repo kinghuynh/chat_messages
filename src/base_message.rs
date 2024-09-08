@@ -22,7 +22,7 @@ pub struct BaseMessageFields {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MessageType {
-    AI,
+    Ai,
     Chat,
     Human,
     System,
@@ -44,7 +44,7 @@ impl TryFrom<&str> for MessageType {
     fn try_from(s: &str) -> Result<MessageType, InvalidMessageTypeError> {
         match s {
             "Human" => Ok(MessageType::Human),
-            "AI" => Ok(MessageType::AI),
+            "AI" => Ok(MessageType::Ai),
             "System" => Ok(MessageType::System),
             _ => Err(InvalidMessageTypeError),
         }

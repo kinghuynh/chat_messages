@@ -3,7 +3,7 @@ mod tests {
     use chat_messages::prelude::*;
 
     define_message!(Human);
-    define_message!(AI);
+    define_message!(Ai);
     define_message!(System);
 
     #[test]
@@ -23,11 +23,11 @@ mod tests {
 
     #[test]
     fn test_ai_message_creation() {
-        let msg = AIMessage::new("Hello, AI!");
+        let msg = AiMessage::new("Hello, AI!");
 
         assert_eq!(msg.content(), "Hello, AI!");
 
-        assert_eq!(msg.message_type(), MessageType::AI);
+        assert_eq!(msg.message_type(), MessageType::Ai);
     }
 
     #[test]
@@ -77,13 +77,13 @@ mod tests {
     #[test]
     fn test_multiple_message_types() {
         let human_msg = HumanMessage::new("Hello, Human!");
-        let ai_msg = AIMessage::new("Hello, AI!");
+        let ai_msg = AiMessage::new("Hello, AI!");
         let system_msg = SystemMessage::new("System initiated");
 
         assert_eq!(human_msg.message_type(), MessageType::Human);
         assert_eq!(human_msg.content(), "Hello, Human!");
 
-        assert_eq!(ai_msg.message_type(), MessageType::AI);
+        assert_eq!(ai_msg.message_type(), MessageType::Ai);
         assert_eq!(ai_msg.content(), "Hello, AI!");
 
         assert_eq!(system_msg.message_type(), MessageType::System);
@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn test_default_additional_kwargs() {
-        let mut msg = AIMessage::new("AI Test");
+        let mut msg = AiMessage::new("AI Test");
 
         assert!(msg.base.additional_kwargs.is_empty());
 

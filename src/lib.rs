@@ -8,7 +8,7 @@ pub mod prelude;
 pub use derive_base_message;
 
 pub mod ai_message;
-pub use ai_message::AIMessage;
+pub use ai_message::AiMessage;
 
 pub mod chat_message;
 pub use chat_message::ChatMessage;

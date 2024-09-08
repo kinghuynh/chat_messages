@@ -1,3 +1,3 @@
 use crate::prelude::*;
 
-define_message!(AI);
+define_message!(Ai);
