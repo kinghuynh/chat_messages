@@ -2,6 +2,9 @@
 name = "chat_messages"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/kinghuynh/chat_messages.git"
+authors = ["Kingston Huynh <139024820+kinghuynh@users.noreply.github.com>"]
 
 [dependencies]
 paste = "1.0.15"
