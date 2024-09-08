@@ -2,8 +2,8 @@ extern crate proc_macro;
 use crate::fields::{extract_fields, field_args, field_initializers};
 use crate::methods::implement_base_getters;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
-use syn::{DeriveInput, Error};
+use quote::{format_ident, quote};
+use syn::{DeriveInput, Error, Ident};
 
 fn implement_struct_new(input: &DeriveInput) -> Result<TokenStream2, Error> {
     let named_fields = extract_fields(input)?;
@@ -27,8 +27,18 @@ fn implement_struct_new(input: &DeriveInput) -> Result<TokenStream2, Error> {
     })
 }
 
+fn extract_message_type_name(input: &DeriveInput) -> Ident {
+    let struct_name = &input.ident;
+    let struct_name_str = struct_name.to_string();
+    let message_type_str = struct_name_str
+        .strip_suffix("Message")
+        .unwrap_or(&struct_name_str);
+    format_ident!("{}", message_type_str)
+}
+
 fn implement_base_message(input: &DeriveInput) -> TokenStream2 {
     let struct_name = &input.ident;
+    let message_type_name = extract_message_type_name(input);
 
     quote! {
         impl BaseMessage for #struct_name {
@@ -37,7 +47,7 @@ fn implement_base_message(input: &DeriveInput) -> TokenStream2 {
             }
 
             fn message_type(&self) -> MessageType {
-                MessageType::#struct_name
+                MessageType::#message_type_name
             }
         }
     }
