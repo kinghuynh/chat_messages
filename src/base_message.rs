@@ -22,9 +22,11 @@ pub struct BaseMessageFields {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MessageType {
-    Human,
     AI,
+    Chat,
+    Human,
     System,
+    Tool,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
