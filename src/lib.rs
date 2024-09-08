@@ -8,3 +8,5 @@ pub mod define_message;
 pub mod human_message;
 pub mod prelude;
 pub mod system_message;
+
+pub use derive_base_message;
