@@ -2,6 +2,11 @@
 name = "derive_base_message"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
+description = "A procedural macro for generating base message structures."
+keywords = ["proc-macro", "derive", "rust", "llm", "langchain"]
+categories = ["development-tools", "macros"]
+authors = ["Kingston Huynh <139024820+kinghuynh@users.noreply.github.com>"]
 
 [lib]
 proc-macro = true
@@ -10,4 +15,3 @@ proc-macro = true
 proc-macro2 = "1.0.86"
 quote = "1.0.37"
 syn = { version = "2.0.77", features = ["full"] }
-
