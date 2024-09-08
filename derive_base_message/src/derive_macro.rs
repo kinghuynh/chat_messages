@@ -141,7 +141,7 @@ mod tests {
                 }
 
                 fn message_type(&self) -> MessageType {
-                    MessageType::HumanMessage
+                    MessageType::Human
                 }
             }
         };
