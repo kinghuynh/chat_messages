@@ -216,6 +216,39 @@ mod tests {
     }
 
     #[test]
+    fn test_field_args_with_optional_fields() {
+        let input: DeriveInput = parse_quote! {
+            struct TestStruct {
+                field1: String,
+                field2: u32,
+                optional_field: Option<String>,
+            }
+        };
+
+        let fields = extract_fields(&input).unwrap();
+        let result = field_args(fields, &[]);
+
+        let expected = quote! {
+            field1: String,
+            field2: u32,
+            optional_field: Option<String>
+        };
+
+        assert_eq!(result.to_string(), expected.to_string());
+        let result_with_exclusion = field_args(fields, &["field2"]);
+
+        let expected_with_exclusion = quote! {
+            field1: String,
+            optional_field: Option<String>
+        };
+
+        assert_eq!(
+            result_with_exclusion.to_string(),
+            expected_with_exclusion.to_string()
+        );
+    }
+
+    #[test]
     fn test_field_initializers_single_exclude() {
         let input: DeriveInput = parse_quote! {
             struct TestStruct {
@@ -266,5 +299,38 @@ mod tests {
         let expected = quote! {};
 
         assert_eq!(result.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn test_field_initializers_with_optional_fields() {
+        let input: DeriveInput = parse_quote! {
+            struct TestStruct {
+                field1: String,
+                field2: u32,
+                optional_field: Option<String>,
+            }
+        };
+
+        let fields = extract_fields(&input).unwrap();
+        let result = field_initializers(fields, &[]);
+
+        let expected = quote! {
+            field1,
+            field2,
+            optional_field
+        };
+
+        assert_eq!(result.to_string(), expected.to_string());
+        let result_with_exclusion = field_initializers(fields, &["field2"]);
+
+        let expected_with_exclusion = quote! {
+            field1,
+            optional_field
+        };
+
+        assert_eq!(
+            result_with_exclusion.to_string(),
+            expected_with_exclusion.to_string()
+        );
     }
 }
