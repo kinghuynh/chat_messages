@@ -12,10 +12,14 @@ fn implement_struct_new(input: &DeriveInput) -> Result<TokenStream2, Error> {
 
     Ok(quote! {
         pub fn new(content: &str, #field_args) -> Self {
+            Self::new_with_example(content, false, #field_initializers)
+        }
+
+        pub fn new_with_example(content: &str, example: bool, #field_args) -> Self {
             Self {
                 base: BaseMessageFields {
                     content: content.to_string(),
-                    example: false,
+                    example,
                     additional_kwargs: std::collections::HashMap::new(),
                     response_metadata: std::collections::HashMap::new(),
                     id: None,
@@ -101,10 +105,14 @@ mod tests {
         let expected = quote! {
             impl HumanMessage {
                 pub fn new(content: &str, role: String) -> Self {
+                    Self::new_with_example(content, false, role)
+                }
+
+                pub fn new_with_example(content: &str, example: bool, role: String) -> Self {
                     Self {
                         base: BaseMessageFields {
                             content: content.to_string(),
-                            example: false,
+                            example,
                             additional_kwargs: std::collections::HashMap::new(),
                             response_metadata: std::collections::HashMap::new(),
                             id: None,
