@@ -18,3 +18,6 @@ pub use human_message::HumanMessage;
 
 pub mod system_message;
 pub use system_message::SystemMessage;
+
+pub mod tool_message;
+pub use tool_message::ToolMessage;

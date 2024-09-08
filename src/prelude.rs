@@ -10,3 +10,4 @@ pub use crate::ai_message::AiMessage;
 pub use crate::chat_message::ChatMessage;
 pub use crate::human_message::HumanMessage;
 pub use crate::system_message::SystemMessage;
+pub use crate::tool_message::ToolMessage;
