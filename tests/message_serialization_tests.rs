@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use chat_messages::prelude::*;
+    use messageforge::prelude::*;
 
     define_message!(MessageType::Human);
 

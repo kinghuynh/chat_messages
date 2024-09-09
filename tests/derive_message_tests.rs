@@ -1,5 +1,5 @@
-use chat_messages::{BaseMessage, BaseMessageFields, MessageType};
 use derive_base_message::BaseMessage;
+use messageforge::{BaseMessage, BaseMessageFields, MessageType};
 
 #[derive(BaseMessage)]
 pub struct HumanMessage {

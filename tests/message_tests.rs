@@ -1,4 +1,4 @@
-use chat_messages::prelude::*;
+use messageforge::prelude::*;
 
 #[test]
 fn test_message_integration() {

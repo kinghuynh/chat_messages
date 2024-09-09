@@ -5,7 +5,7 @@ edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/kinghuynh/messageforge.git"
 authors = ["Kingston Huynh <139024820+kinghuynh@users.noreply.github.com>"]
-description = "chat_messages is a lightweight Rust library for creating structured messages in chat systems, including HumanMessage, AiMessage, SystemMessage, and more. It supports easy extensibility through macros, Serde-based serialization, and customizable fields, making it ideal for chatbots, AI agents, and messaging platforms."
+description = "messageforge is a lightweight Rust library for creating structured messages in chat systems, including HumanMessage, AiMessage, SystemMessage, and more. It supports easy extensibility through macros, Serde-based serialization, and customizable fields, making it ideal for chatbots, AI agents, and messaging platforms."
 keywords = ["llm", "AI", "langchain", "chatbots", "agents"]
 categories = ["text-processing", "parsing", "development-tools::procedural-macro-helpers", "development-tools"]
 
