@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fmt};
+use std::{
+    collections::HashMap,
+    fmt::{self, Debug},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -57,4 +60,15 @@ impl TryFrom<&str> for MessageType {
 pub trait BaseMessage {
     fn content(&self) -> &str;
     fn message_type(&self) -> MessageType;
+}
+
+impl Debug for dyn BaseMessage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "BaseMessage {{ content: \"{}\", message_type: {:?} }}",
+            self.content(),
+            self.message_type()
+        )
+    }
 }
