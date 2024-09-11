@@ -17,7 +17,7 @@ fn test_message_integration() {
     assert_eq!(chat_msg.message_type(), MessageType::Chat);
 
     let chat_msg_debug_output = format!("{:?}", chat_msg);
-    let expected_chat_msg_debug = r#"ChatMessage { base: BaseMessageFields { content: "Hello from Chat!", example: false, additional_kwargs: {}, response_metadata: {}, id: None, name: None }, role: "User" }"#;
+    let expected_chat_msg_debug = r#"ChatMessage { role: "User", base: BaseMessageFields { content: "Hello from Chat!", example: false, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
     assert_eq!(chat_msg_debug_output, expected_chat_msg_debug);
 
     let human_msg = HumanMessage::new("This is a human message");

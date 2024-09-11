@@ -25,8 +25,6 @@ macro_rules! define_message {
                     }
                 }
 
-                // Getters for BaseMessageFields
-
                 pub fn content(&self) -> &str {
                     &self.base.content
                 }
