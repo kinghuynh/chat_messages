@@ -57,6 +57,28 @@ fn implement_base_message(input: &DeriveInput) -> TokenStream2 {
     }
 }
 
+fn implement_debug(input: &DeriveInput) -> Result<TokenStream2, Error> {
+    let struct_name = &input.ident;
+    let named_fields = extract_fields(input)?;
+
+    let debug_field_names = named_fields.named.iter().map(|field| {
+        let field_name = field.ident.as_ref().unwrap();
+        quote! {
+            .field(stringify!(#field_name), &self.#field_name)
+        }
+    });
+
+    Ok(quote! {
+        impl std::fmt::Debug for #struct_name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct(stringify!(#struct_name))
+                    #(#debug_field_names)*
+                    .finish()
+            }
+        }
+    })
+}
+
 pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
     let ast: DeriveInput = match syn::parse2(input) {
         Ok(ast) => ast,
@@ -72,6 +94,10 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
 
     let base_getters = implement_base_getters();
     let base_message_impl = implement_base_message(&ast);
+    let debug_impl = match implement_debug(&ast) {
+        Ok(impl_code) => impl_code,
+        Err(err) => return err.to_compile_error(),
+    };
 
     quote! {
         impl #struct_name {
@@ -79,6 +105,7 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
             #base_getters
         }
         #base_message_impl
+        #debug_impl
     }
 }
 
@@ -90,7 +117,6 @@ mod tests {
 
     #[test]
     fn test_derive_macro_generates_correct_code() {
-        // Step 1: Create a mock input struct using syn's parse_quote
         let input: DeriveInput = parse_quote! {
             struct HumanMessage {
                 role: String,
@@ -98,10 +124,8 @@ mod tests {
             }
         };
 
-        // Step 2: Call the `derive_macro` function to generate the code
         let generated = derive_macro(quote! { #input });
 
-        // Step 3: Define the expected output TokenStream
         let expected = quote! {
             impl HumanMessage {
                 pub fn new(content: &str, role: String) -> Self {
@@ -152,9 +176,17 @@ mod tests {
                     MessageType::Human
                 }
             }
+
+            impl std::fmt::Debug for HumanMessage {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    f.debug_struct("HumanMessage")
+                        .field("role", &self.role)
+                        .field("base", &self.base)
+                        .finish()
+                }
+            }
         };
 
-        // Step 4: Compare the generated output with the expected output
         assert_eq!(generated.to_string(), expected.to_string());
     }
 }
