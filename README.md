@@ -106,19 +106,24 @@ fn main() {
 The `ToolMessage` type represents the result of a tool invocation or external process.
 
 ```rust
-use messageforge::{ToolMessage, BaseMessage};
+use messageforge::{ToolMessage, BaseMessage, ToolStatus};
 
 fn main() {
-    let tool_msg = ToolMessage::new("Tool executed successfully.", "tool_123".to_string());
+    let tool_msg = ToolMessage::new(
+        "tool_123".to_string(),          // tool_call_id
+        Some("artifact_456".to_string()), // artifact (optional)
+        ToolStatus::Success,             // status
+    );
 
-    // Access the message content
     println!("Tool Message content: {}", tool_msg.content());
-
-    // Check the message type
     assert_eq!(tool_msg.message_type(), MessageType::Tool);
     
-    // Access the tool call ID
     println!("Tool Call ID: {}", tool_msg.tool_call_id);
+    if let Some(artifact) = &tool_msg.artifact {
+        println!("Artifact: {}", artifact);
+    }
+
+    println!("Status: {:?}", tool_msg.status);
 }
 ```
 
