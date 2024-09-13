@@ -46,12 +46,9 @@ impl TryFrom<&str> for MessageType {
 
     fn try_from(s: &str) -> Result<MessageType, InvalidMessageTypeError> {
         match s {
-            "Human" => Ok(MessageType::Human),
-            "HumanMessage" => Ok(MessageType::Human),
-            "Ai" => Ok(MessageType::Ai),
-            "AiMessage" => Ok(MessageType::Ai),
-            "System" => Ok(MessageType::System),
-            "SystemMessage" => Ok(MessageType::System),
+            "Human" | "HumanMessage" => Ok(MessageType::Human),
+            "Ai" | "AiMessage" => Ok(MessageType::Ai),
+            "System" | "SystemMessage" => Ok(MessageType::System),
             _ => Err(InvalidMessageTypeError),
         }
     }
