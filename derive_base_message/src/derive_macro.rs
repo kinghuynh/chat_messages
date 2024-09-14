@@ -60,6 +60,27 @@ fn implement_base_message(input: &DeriveInput) -> TokenStream2 {
     }
 }
 
+fn implement_serialize(input: &DeriveInput) -> TokenStream2 {
+    let struct_name = &input.ident;
+
+    quote! {
+        impl Serialize for #struct_name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                let mut state = serde_json::Map::new();
+                state.insert("role".to_string(), serde_json::Value::String(self.role().to_string()));
+                let base_json = serde_json::to_value(&self.base).map_err(serde::ser::Error::custom)?;
+                if let serde_json::Value::Object(map) = base_json {
+                    state.extend(map);
+                }
+                serde_json::Value::Object(state).serialize(serializer)
+            }
+        }
+    }
+}
+
 pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
     let ast: DeriveInput = match syn::parse2(input) {
         Ok(ast) => ast,
@@ -76,6 +97,7 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
     let base_getters = implement_base_getters();
     let base_setters = implement_base_setters();
     let base_message_impl = implement_base_message(&ast);
+    let serialize_impl = implement_serialize(&ast);
 
     quote! {
         impl #struct_name {
@@ -84,6 +106,7 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
             #base_setters
         }
         #base_message_impl
+        #serialize_impl
     }
 }
 
@@ -172,6 +195,21 @@ mod tests {
 
                 fn role(&self) -> &str {
                     MessageType::Human.as_str()
+                }
+            }
+
+            impl Serialize for HumanMessage {
+                fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                where
+                    S: serde::Serializer,
+                {
+                    let mut state = serde_json::Map::new();
+                    state.insert("role".to_string(), serde_json::Value::String(self.role().to_string()));
+                    let base_json = serde_json::to_value(&self.base).map_err(serde::ser::Error::custom)?;
+                    if let serde_json::Value::Object(map) = base_json {
+                        state.extend(map);
+                    }
+                    serde_json::Value::Object(state).serialize(serializer)
                 }
             }
         };

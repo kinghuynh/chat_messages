@@ -1,19 +1,17 @@
-use derive_base_message::BaseMessage;
-use messageforge::{BaseMessage, BaseMessageFields, MessageType};
-
-#[derive(BaseMessage)]
-pub struct HumanMessage {
-    pub role: String,
-    pub base: BaseMessageFields,
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use derive_base_message::BaseMessage;
+    use messageforge::prelude::*;
+
+    #[derive(BaseMessage, Deserialize)]
+    pub struct ChatMessage {
+        pub role: String,
+        pub base: BaseMessageFields,
+    }
 
     #[test]
     fn test_human_message_new_method() {
-        let msg = HumanMessage::new("Hello, world!", "Admin".to_string());
+        let msg = ChatMessage::new("Hello, world!", "Admin".to_string());
 
         assert_eq!(msg.base.content, "Hello, world!");
         assert_eq!(msg.role, "Admin");
@@ -26,8 +24,8 @@ mod tests {
 
     #[test]
     fn test_human_message_base_message_trait_methods() {
-        let msg = HumanMessage::new("Hello, world!", "User".to_string());
+        let msg = ChatMessage::new("Hello, world!", "User".to_string());
         assert_eq!(msg.content(), "Hello, world!");
-        assert_eq!(msg.message_type(), MessageType::Human);
+        assert_eq!(msg.message_type(), MessageType::Chat);
     }
 }
