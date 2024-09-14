@@ -39,14 +39,12 @@ mod tests {
         // Define a JSON string for deserialization testing
         let json_str = r#"
         {
-            "base": {
-                "content": "Hello, world!",
-                "example": false,
-                "additional_kwargs": {"key1": "value1"},
-                "response_metadata": {"meta1": "metadata1"},
-                "id": "12345",
-                "name": "John Doe"
-            }
+            "content": "Hello, world!",
+            "example": false,
+            "additional_kwargs": {"key1": "value1"},
+            "response_metadata": {"meta1": "metadata1"},
+            "id": "12345",
+            "name": "John Doe"
         }
         "#;
 
@@ -92,12 +90,10 @@ mod tests {
         // Define a JSON string without additional_kwargs or response_metadata
         let json_str = r#"
         {
-            "base": {
-                "content": "Hello, empty fields!",
-                "example": false,
-                "id": null,
-                "name": null
-            }
+            "content": "Hello, empty fields!",
+            "example": false,
+            "id": null,
+            "name": null
         }
         "#;
 
