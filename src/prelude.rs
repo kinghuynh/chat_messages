@@ -1,5 +1,7 @@
 pub use crate::base_message::{BaseMessage, BaseMessageFields};
+pub use crate::message_type::MessageType::*;
 pub use crate::message_type::{InvalidMessageTypeError, MessageType};
+
 pub use serde::{Deserialize, Serialize};
 
 pub use crate::define_message;
