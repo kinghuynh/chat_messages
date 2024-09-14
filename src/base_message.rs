@@ -23,40 +23,9 @@ pub struct BaseMessageFields {
     pub name: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum MessageType {
-    Ai,
-    Chat,
-    Human,
-    System,
-    Tool,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct InvalidMessageTypeError;
-
-impl fmt::Display for InvalidMessageTypeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Invalid message type")
-    }
-}
-
-impl TryFrom<&str> for MessageType {
-    type Error = InvalidMessageTypeError;
-
-    fn try_from(s: &str) -> Result<MessageType, InvalidMessageTypeError> {
-        match s {
-            "Human" | "HumanMessage" => Ok(MessageType::Human),
-            "Ai" | "AiMessage" => Ok(MessageType::Ai),
-            "System" | "SystemMessage" => Ok(MessageType::System),
-            _ => Err(InvalidMessageTypeError),
-        }
-    }
-}
-
 pub trait BaseMessage {
     fn content(&self) -> &str;
-    fn message_type(&self) -> MessageType;
+    fn message_type(&self) -> crate::MessageType;
 }
 
 impl Debug for dyn BaseMessage {

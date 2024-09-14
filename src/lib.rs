@@ -1,7 +1,10 @@
+pub mod message_type;
+pub use message_type::InvalidMessageTypeError;
+pub use message_type::MessageType;
+
 pub mod base_message;
 pub use base_message::BaseMessage;
 pub use base_message::BaseMessageFields;
-pub use base_message::MessageType;
 
 pub mod define_message;
 pub mod prelude;
