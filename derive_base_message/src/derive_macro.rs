@@ -39,10 +39,6 @@ fn implement_struct_new(input: &DeriveInput, has_role: bool) -> Result<TokenStre
         }
     };
 
-    if !has_role {
-        field_initializers.push(quote! { role:   MessageType::#message_type_name.to_string()});
-    }
-
     Ok(quote! {
         #new_impl
 
@@ -278,8 +274,7 @@ mod tests {
                             response_metadata: std::collections::HashMap::new(),
                             id: None,
                             name: None,
-                        },
-                        role: MessageType::System.to_string()
+                        }
                     }
                 }
 
