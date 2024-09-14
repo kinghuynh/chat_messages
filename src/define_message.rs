@@ -22,6 +22,7 @@ macro_rules! define_message {
                         base: BaseMessageFields {
                             content: content.to_string(),
                             example,
+                            message_type: MessageType::$message_type_enum,
                             additional_kwargs: std::collections::HashMap::new(),
                             response_metadata: std::collections::HashMap::new(),
                             id: None,
@@ -72,12 +73,32 @@ macro_rules! define_message {
                     &self.base.content
                 }
 
-                fn message_type(&self) -> MessageType {
-                    $message_type_enum
+                fn message_type(&self) -> &MessageType {
+                    &self.base.message_type
                 }
 
                 fn role(&self) -> &str {
                     $message_type_enum.as_str()
+                }
+
+                fn is_example(&self) -> bool {
+                    self.base.example
+                }
+
+                fn additional_kwargs(&self) -> &std::collections::HashMap<String, String> {
+                    &self.base.additional_kwargs
+                }
+
+                fn response_metadata(&self) -> &std::collections::HashMap<String, String> {
+                    &self.base.response_metadata
+                }
+
+                fn id(&self) -> Option<&str> {
+                    self.base.id.as_deref()
+                }
+
+                fn name(&self) -> Option<&str> {
+                    self.base.name.as_deref()
                 }
             }
 

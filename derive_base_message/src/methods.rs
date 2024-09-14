@@ -7,7 +7,7 @@ pub fn implement_base_getters() -> TokenStream2 {
             &self.base.content
         }
 
-        fn message_type(&self) -> MessageType {
+        fn message_type(&self) -> &MessageType {
             self.base.message_type
         }
 
@@ -68,7 +68,7 @@ mod tests {
                 &self.base.content
             }
 
-            fn message_type(&self) -> MessageType {
+            fn message_type(&self) -> &MessageType {
                 self.base.message_type
             }
 
