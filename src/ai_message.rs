@@ -13,7 +13,7 @@ mod tests {
     fn test_aimessage_creation() {
         let mut ai_message = AiMessage::new("This is an AI message.");
         assert_eq!(ai_message.content(), "This is an AI message.");
-        assert_eq!(ai_message.message_type(), MessageType::Ai);
+        assert_eq!(ai_message.message_type(), &MessageType::Ai);
         assert!(!ai_message.is_example());
         assert!(ai_message.additional_kwargs().is_empty());
         assert!(ai_message.response_metadata().is_empty());
@@ -74,6 +74,7 @@ mod tests {
         let expected_json = json!({
             "content": "This is an AI message.",
             "example": false,
+            "message_type": "Ai",
             "role": "ai",
         });
         let serialized = serde_json::to_string(&ai_message).unwrap();
@@ -87,19 +88,20 @@ mod tests {
             "role": "ai",
             "content": "This is an AI message.",
             "example": false,
+            "message_type": "Ai",
         })
         .to_string();
 
         let ai_message: AiMessage = serde_json::from_str(&json_data).unwrap();
         assert_eq!(ai_message.content(), "This is an AI message.");
-        assert_eq!(ai_message.message_type(), MessageType::Ai);
+        assert_eq!(ai_message.message_type(), &MessageType::Ai);
     }
 
     #[test]
     fn test_aimessage_debug_format() {
         let ai_message = AiMessage::new("Debug AI message.");
         let debug_output = format!("{:?}", ai_message);
-        let expected_debug_output = r#"AiMessage { base: BaseMessageFields { content: "Debug AI message.", example: false, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
+        let expected_debug_output = r#"AiMessage { base: BaseMessageFields { content: "Debug AI message.", example: false, message_type: Ai, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
         assert_eq!(debug_output, expected_debug_output);
     }
 
@@ -132,6 +134,7 @@ mod tests {
             "role": "ai",
             "content": "This is an AI message.",
             "example": false,
+            "message_type": "Ai",
             "id": "AI123",
             "name": "AI Assistant",
             "additional_kwargs": {
