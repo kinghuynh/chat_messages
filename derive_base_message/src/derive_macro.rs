@@ -21,16 +21,21 @@ fn implement_struct_new(input: &DeriveInput) -> Result<TokenStream2, Error> {
     let field_initializers = field_initializers(named_fields, &["base"]);
     let message_type_name = extract_message_type_name(input);
 
-    let new_impl = quote! {
-        pub fn new(content: &str #(,#field_args),*) -> Self {
-            Self::new_with_example(content, false #(,#field_initializers),*)
-        }
+    let (field_args_tokens, field_initializers_tokens) = if field_args.is_empty() {
+        (quote! {}, quote! {})
+    } else {
+        (
+            quote! { , #(#field_args),* },
+            quote! { , #(#field_initializers),* },
+        )
     };
 
     Ok(quote! {
-        #new_impl
+        pub fn new(content: &str #field_args_tokens) -> Self {
+            Self::new_with_example(content, false #field_initializers_tokens)
+        }
 
-        pub fn new_with_example(content: &str, example: bool #(,#field_args),*) -> Self {
+        pub fn new_with_example(content: &str, example: bool #field_args_tokens) -> Self {
             Self {
                 base: BaseMessageFields {
                     content: content.to_string(),
@@ -41,7 +46,7 @@ fn implement_struct_new(input: &DeriveInput) -> Result<TokenStream2, Error> {
                     id: None,
                     name: None,
                 }
-                #(,#field_initializers),*
+                #field_initializers_tokens
             }
         }
     })
@@ -251,6 +256,60 @@ mod tests {
             }
 
             impl BaseMessage for SystemMessage {
+                #base_message_impl_common
+
+                fn role(&self) -> &str {
+                    self.base.message_type.as_str()
+                }
+            }
+        };
+
+        assert_eq!(generated.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn test_struct_with_three_fields_and_base() {
+        let input: DeriveInput = parse_quote! {
+            struct ToolMessage {
+                tool_call_id: String,
+                artifact: Option<String>,
+                status: ToolStatus,
+                base: BaseMessageFields,
+            }
+        };
+
+        let generated = derive_macro(quote! { #input });
+
+        let base_message_impl_common = base_message_impl_common();
+        let base_message_setters = base_message_setters();
+
+        let expected = quote! {
+            impl ToolMessage {
+                pub fn new(content: &str, tool_call_id: String, artifact: Option<String>, status: ToolStatus) -> Self {
+                    Self::new_with_example(content, false, tool_call_id, artifact, status)
+                }
+
+                pub fn new_with_example(content: &str, example: bool, tool_call_id: String, artifact: Option<String>, status: ToolStatus) -> Self {
+                    Self {
+                        base: BaseMessageFields {
+                            content: content.to_string(),
+                            example,
+                            message_type: MessageType::Tool,
+                            additional_kwargs: std::collections::HashMap::new(),
+                            response_metadata: std::collections::HashMap::new(),
+                            id: None,
+                            name: None,
+                        },
+                        tool_call_id,
+                        artifact,
+                        status
+                    }
+                }
+
+                #base_message_setters
+            }
+
+            impl BaseMessage for ToolMessage {
                 #base_message_impl_common
 
                 fn role(&self) -> &str {
