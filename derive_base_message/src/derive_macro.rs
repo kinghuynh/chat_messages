@@ -1,6 +1,5 @@
-extern crate proc_macro;
 use crate::fields::{extract_fields, field_args, field_initializers};
-use crate::methods::implement_base_getters;
+use crate::methods::{implement_base_getters, implement_base_setters};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{DeriveInput, Error, Ident};
@@ -53,27 +52,21 @@ fn implement_base_message(input: &DeriveInput) -> TokenStream2 {
             fn message_type(&self) -> MessageType {
                 MessageType::#message_type_name
             }
+
+            fn role(&self) -> &str {
+                MessageType::#message_type_name.as_str()
+            }
         }
     }
 }
 
 fn implement_debug(input: &DeriveInput) -> Result<TokenStream2, Error> {
     let struct_name = &input.ident;
-    let named_fields = extract_fields(input)?;
-
-    let debug_field_names = named_fields.named.iter().map(|field| {
-        let field_name = field.ident.as_ref().unwrap();
-        quote! {
-            .field(stringify!(#field_name), &self.#field_name)
-        }
-    });
-
     Ok(quote! {
         impl std::fmt::Debug for #struct_name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.debug_struct(stringify!(#struct_name))
-                    #(#debug_field_names)*
-                    .finish()
+                let json = serde_json::to_string(self).unwrap();
+                write!(f, "{}", json)
             }
         }
     })
@@ -93,6 +86,7 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
     };
 
     let base_getters = implement_base_getters();
+    let base_setters = implement_base_setters();
     let base_message_impl = implement_base_message(&ast);
     let debug_impl = match implement_debug(&ast) {
         Ok(impl_code) => impl_code,
@@ -103,6 +97,7 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
         impl #struct_name {
             #struct_new_impl
             #base_getters
+            #base_setters
         }
         #base_message_impl
         #debug_impl
@@ -165,6 +160,22 @@ mod tests {
                 pub fn name(&self) -> Option<&str> {
                     self.base.name.as_deref()
                 }
+
+                pub fn set_content(&mut self, new_content: &str) {
+                    self.base.content = new_content.to_string();
+                }
+
+                pub fn set_example(&mut self, example: bool) {
+                    self.base.example = example;
+                }
+
+                pub fn set_id(&mut self, id: Option<String>) {
+                    self.base.id = id;
+                }
+
+                pub fn set_name(&mut self, name: Option<String>) {
+                    self.base.name = name;
+                }
             }
 
             impl BaseMessage for HumanMessage {
@@ -175,14 +186,16 @@ mod tests {
                 fn message_type(&self) -> MessageType {
                     MessageType::Human
                 }
+
+                fn role(&self) -> &str {
+                    MessageType::Human.as_str()
+                }
             }
 
             impl std::fmt::Debug for HumanMessage {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    f.debug_struct("HumanMessage")
-                        .field("role", &self.role)
-                        .field("base", &self.base)
-                        .finish()
+                    let json = serde_json::to_string(self).unwrap();
+                    write!(f, "{}", json)
                 }
             }
         };
