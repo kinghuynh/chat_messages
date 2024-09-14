@@ -60,18 +60,6 @@ fn implement_base_message(input: &DeriveInput) -> TokenStream2 {
     }
 }
 
-fn implement_debug(input: &DeriveInput) -> Result<TokenStream2, Error> {
-    let struct_name = &input.ident;
-    Ok(quote! {
-        impl std::fmt::Debug for #struct_name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                let json = serde_json::to_string(self).unwrap();
-                write!(f, "{}", json)
-            }
-        }
-    })
-}
-
 pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
     let ast: DeriveInput = match syn::parse2(input) {
         Ok(ast) => ast,
@@ -88,10 +76,6 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
     let base_getters = implement_base_getters();
     let base_setters = implement_base_setters();
     let base_message_impl = implement_base_message(&ast);
-    let debug_impl = match implement_debug(&ast) {
-        Ok(impl_code) => impl_code,
-        Err(err) => return err.to_compile_error(),
-    };
 
     quote! {
         impl #struct_name {
@@ -100,7 +84,6 @@ pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
             #base_setters
         }
         #base_message_impl
-        #debug_impl
     }
 }
 
@@ -189,13 +172,6 @@ mod tests {
 
                 fn role(&self) -> &str {
                     MessageType::Human.as_str()
-                }
-            }
-
-            impl std::fmt::Debug for HumanMessage {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    let json = serde_json::to_string(self).unwrap();
-                    write!(f, "{}", json)
                 }
             }
         };
