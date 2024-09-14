@@ -13,7 +13,7 @@ mod tests {
     fn test_humanmessage_creation() {
         let mut human_message = HumanMessage::new("This is a human message.");
         assert_eq!(human_message.content(), "This is a human message.");
-        assert_eq!(human_message.message_type(), MessageType::Human);
+        assert_eq!(human_message.message_type(), &MessageType::Human);
         assert!(!human_message.is_example());
         assert!(human_message.additional_kwargs().is_empty());
         assert!(human_message.response_metadata().is_empty());
@@ -74,6 +74,7 @@ mod tests {
         let expected_json = json!({
             "content": "This is a human message.",
             "example": false,
+            "message_type": "Human",
             "role": "human",
         });
         let serialized = serde_json::to_string(&human_message).unwrap();
@@ -87,19 +88,20 @@ mod tests {
             "role": "human",
             "content": "This is a human message.",
             "example": false,
+            "message_type": "Human",
         })
         .to_string();
 
         let human_message: HumanMessage = serde_json::from_str(&json_data).unwrap();
         assert_eq!(human_message.content(), "This is a human message.");
-        assert_eq!(human_message.message_type(), MessageType::Human);
+        assert_eq!(human_message.message_type(), &MessageType::Human);
     }
 
     #[test]
     fn test_humanmessage_debug_format() {
         let human_message = HumanMessage::new("Debug human message.");
         let debug_output = format!("{:?}", human_message);
-        let expected_debug_output = r#"HumanMessage { base: BaseMessageFields { content: "Debug human message.", example: false, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
+        let expected_debug_output = r#"HumanMessage { base: BaseMessageFields { content: "Debug human message.", example: false, message_type: Human, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
         assert_eq!(debug_output, expected_debug_output);
     }
 
@@ -132,6 +134,7 @@ mod tests {
             "role": "human",
             "content": "This is a human message.",
             "example": false,
+            "message_type": "Human",
             "id": "HUM123",
             "name": "User123",
             "additional_kwargs": {
