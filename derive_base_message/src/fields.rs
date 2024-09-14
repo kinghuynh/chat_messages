@@ -26,8 +26,8 @@ fn is_excluded(name: &Option<Ident>, excludes: &[&str]) -> bool {
         .map_or(false, |n| excludes.contains(&n.to_string().as_str()))
 }
 
-pub fn field_args(fields: &FieldsNamed, excludes: &[&str]) -> proc_macro2::TokenStream {
-    let args = fields
+pub fn field_args(fields: &FieldsNamed, excludes: &[&str]) -> Vec<proc_macro2::TokenStream> {
+    fields
         .named
         .iter()
         .map(field_name_and_type)
@@ -35,13 +35,15 @@ pub fn field_args(fields: &FieldsNamed, excludes: &[&str]) -> proc_macro2::Token
         .map(|(name, ty)| {
             let name = name.as_ref().unwrap();
             quote! { #name: #ty }
-        });
-
-    quote! { #(#args),* }
+        })
+        .collect()
 }
 
-pub fn field_initializers(fields: &FieldsNamed, excludes: &[&str]) -> proc_macro2::TokenStream {
-    let inits = fields
+pub fn field_initializers(
+    fields: &FieldsNamed,
+    excludes: &[&str],
+) -> Vec<proc_macro2::TokenStream> {
+    fields
         .named
         .iter()
         .map(field_name_and_type)
@@ -49,9 +51,8 @@ pub fn field_initializers(fields: &FieldsNamed, excludes: &[&str]) -> proc_macro
         .map(|(name, _)| {
             let name = name.as_ref().unwrap();
             quote! { #name }
-        });
-
-    quote! { #(#inits),* }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -133,7 +134,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_args(fields, &[]); // No excludes
+        let result_vec = field_args(fields, &[]); // No excludes
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field1: String,
@@ -153,7 +155,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_args(fields, &["field1"]); // Exclude "field1"
+        let result_vec = field_args(fields, &["field1"]); // Exclude "field1"
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field2: u32
@@ -173,7 +176,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_args(fields, &["field1", "field3"]); // Exclude "field1" and "field3"
+        let result_vec = field_args(fields, &["field1", "field3"]);
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field2: u32
@@ -189,8 +193,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_args(fields, &[]); // No excludes
-
+        let result_vec = field_args(fields, &[]); // No excludes
+        let result = quote! { #(#result_vec),* };
         let expected = quote! {};
 
         assert_eq!(result.to_string(), expected.to_string());
@@ -206,7 +210,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_initializers(fields, &[]); // No excludes
+        let result_vec = field_initializers(fields, &[]);
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field1, field2
@@ -226,7 +231,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_args(fields, &[]);
+        let result_vec = field_args(fields, &[]);
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field1: String,
@@ -235,17 +241,14 @@ mod tests {
         };
 
         assert_eq!(result.to_string(), expected.to_string());
-        let result_with_exclusion = field_args(fields, &["field2"]);
-
+        let result_vec = field_args(fields, &["field2"]);
+        let result = quote! { #(#result_vec),* };
         let expected_with_exclusion = quote! {
             field1: String,
             optional_field: Option<String>
         };
 
-        assert_eq!(
-            result_with_exclusion.to_string(),
-            expected_with_exclusion.to_string()
-        );
+        assert_eq!(result.to_string(), expected_with_exclusion.to_string());
     }
 
     #[test]
@@ -258,7 +261,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_initializers(fields, &["field1"]);
+        let result_vec = field_initializers(fields, &["field1"]);
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field2
@@ -278,7 +282,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_initializers(fields, &["field1", "field3"]);
+        let result_vec = field_initializers(fields, &["field1", "field3"]);
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field2
@@ -294,8 +299,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_initializers(fields, &[]);
-
+        let result_vec = field_initializers(fields, &[]);
+        let result = quote! { #(#result_vec),* };
         let expected = quote! {};
 
         assert_eq!(result.to_string(), expected.to_string());
@@ -312,7 +317,8 @@ mod tests {
         };
 
         let fields = extract_fields(&input).unwrap();
-        let result = field_initializers(fields, &[]);
+        let result_vec = field_initializers(fields, &[]);
+        let result = quote! { #(#result_vec),* };
 
         let expected = quote! {
             field1,
@@ -321,16 +327,14 @@ mod tests {
         };
 
         assert_eq!(result.to_string(), expected.to_string());
-        let result_with_exclusion = field_initializers(fields, &["field2"]);
+        let result_vec = field_initializers(fields, &["field2"]);
+        let result = quote! { #(#result_vec),* };
 
         let expected_with_exclusion = quote! {
             field1,
             optional_field
         };
 
-        assert_eq!(
-            result_with_exclusion.to_string(),
-            expected_with_exclusion.to_string()
-        );
+        assert_eq!(result.to_string(), expected_with_exclusion.to_string());
     }
 }

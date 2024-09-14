@@ -3,23 +3,31 @@ use quote::quote;
 
 pub fn implement_base_getters() -> TokenStream2 {
     quote! {
-        pub fn is_example(&self) -> bool {
+        fn content(&self) -> &str {
+            &self.base.content
+        }
+
+        fn message_type(&self) -> MessageType {
+            self.base.message_type
+        }
+
+        fn is_example(&self) -> bool {
             self.base.example
         }
 
-        pub fn additional_kwargs(&self) -> &std::collections::HashMap<String, String> {
+        fn additional_kwargs(&self) -> &std::collections::HashMap<String, String> {
             &self.base.additional_kwargs
         }
 
-        pub fn response_metadata(&self) -> &std::collections::HashMap<String, String> {
+        fn response_metadata(&self) -> &std::collections::HashMap<String, String> {
             &self.base.response_metadata
         }
 
-        pub fn id(&self) -> Option<&str> {
+        fn id(&self) -> Option<&str> {
             self.base.id.as_deref()
         }
 
-        pub fn name(&self) -> Option<&str> {
+        fn name(&self) -> Option<&str> {
             self.base.name.as_deref()
         }
     }
@@ -56,23 +64,31 @@ mod tests {
         let generated = implement_base_getters();
 
         let expected = quote! {
-            pub fn is_example(&self) -> bool {
+            fn content(&self) -> &str {
+                &self.base.content
+            }
+
+            fn message_type(&self) -> MessageType {
+                self.base.message_type
+            }
+
+            fn is_example(&self) -> bool {
                 self.base.example
             }
 
-            pub fn additional_kwargs(&self) -> &std::collections::HashMap<String, String> {
+            fn additional_kwargs(&self) -> &std::collections::HashMap<String, String> {
                 &self.base.additional_kwargs
             }
 
-            pub fn response_metadata(&self) -> &std::collections::HashMap<String, String> {
+            fn response_metadata(&self) -> &std::collections::HashMap<String, String> {
                 &self.base.response_metadata
             }
 
-            pub fn id(&self) -> Option<&str> {
+            fn id(&self) -> Option<&str> {
                 self.base.id.as_deref()
             }
 
-            pub fn name(&self) -> Option<&str> {
+            fn name(&self) -> Option<&str> {
                 self.base.name.as_deref()
             }
         };
