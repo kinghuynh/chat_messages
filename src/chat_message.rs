@@ -1,14 +1,8 @@
 use crate::prelude::*;
 use derive_base_message::BaseMessage;
 
-#[derive(BaseMessage)]
+#[derive(BaseMessage, Debug, Serialize, Deserialize)]
 pub struct ChatMessage {
     role: String,
     base: BaseMessageFields,
-}
-
-impl ChatMessage {
-    pub fn role(&self) -> &str {
-        &self.role
-    }
 }

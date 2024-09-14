@@ -12,7 +12,7 @@ mod tests {
 
         assert_eq!(msg.content(), "Hello, Human!");
 
-        assert_eq!(msg.message_type(), MessageType::Human);
+        assert_eq!(msg.message_type(), &MessageType::Human);
 
         assert!(!msg.base.example);
         assert!(msg.base.additional_kwargs.is_empty());
@@ -27,7 +27,7 @@ mod tests {
 
         assert_eq!(msg.content(), "Hello, AI!");
 
-        assert_eq!(msg.message_type(), MessageType::Ai);
+        assert_eq!(msg.message_type(), &MessageType::Ai);
     }
 
     #[test]
@@ -36,7 +36,7 @@ mod tests {
 
         assert_eq!(msg.content(), "System initialized!");
 
-        assert_eq!(msg.message_type(), MessageType::System);
+        assert_eq!(msg.message_type(), &MessageType::System);
     }
 
     #[test]
@@ -71,7 +71,7 @@ mod tests {
         let msg = HumanMessage::new("");
 
         assert_eq!(msg.content(), "");
-        assert_eq!(msg.message_type(), MessageType::Human);
+        assert_eq!(msg.message_type(), &MessageType::Human);
     }
 
     #[test]
@@ -80,13 +80,13 @@ mod tests {
         let ai_msg = AiMessage::new("Hello, AI!");
         let system_msg = SystemMessage::new("System initiated");
 
-        assert_eq!(human_msg.message_type(), MessageType::Human);
+        assert_eq!(human_msg.message_type(), &MessageType::Human);
         assert_eq!(human_msg.content(), "Hello, Human!");
 
-        assert_eq!(ai_msg.message_type(), MessageType::Ai);
+        assert_eq!(ai_msg.message_type(), &MessageType::Ai);
         assert_eq!(ai_msg.content(), "Hello, AI!");
 
-        assert_eq!(system_msg.message_type(), MessageType::System);
+        assert_eq!(system_msg.message_type(), &MessageType::System);
         assert_eq!(system_msg.content(), "System initiated");
     }
 
@@ -120,7 +120,7 @@ mod tests {
         let msg = HumanMessage::new("Testing from the macro");
 
         assert_eq!(msg.content(), "Testing from the macro");
-        assert_eq!(msg.message_type(), MessageType::Human);
+        assert_eq!(msg.message_type(), &MessageType::Human);
     }
 
     #[test]
@@ -134,7 +134,7 @@ mod tests {
         assert!(human_message.response_metadata().is_empty());
         assert_eq!(human_message.id(), None);
         assert_eq!(human_message.name(), None);
-        assert_eq!(human_message.message_type(), MessageType::Human);
+        assert_eq!(human_message.message_type(), &MessageType::Human);
 
         human_message.base.example = true;
         human_message

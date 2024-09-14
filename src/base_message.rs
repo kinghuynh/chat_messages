@@ -3,12 +3,14 @@ use std::{
     fmt::{self, Debug},
 };
 
+use crate::MessageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BaseMessageFields {
     pub content: String,
     pub example: bool,
+    pub message_type: MessageType,
 
     #[serde(skip_serializing_if = "HashMap::is_empty", default)]
     pub additional_kwargs: HashMap<String, String>,
@@ -25,8 +27,13 @@ pub struct BaseMessageFields {
 
 pub trait BaseMessage {
     fn content(&self) -> &str;
-    fn message_type(&self) -> crate::MessageType;
+    fn message_type(&self) -> &MessageType;
     fn role(&self) -> &str;
+    fn name(&self) -> Option<&str>;
+    fn is_example(&self) -> bool;
+    fn additional_kwargs(&self) -> &std::collections::HashMap<String, String>;
+    fn response_metadata(&self) -> &std::collections::HashMap<String, String>;
+    fn id(&self) -> Option<&str>;
 }
 
 impl Debug for dyn BaseMessage {

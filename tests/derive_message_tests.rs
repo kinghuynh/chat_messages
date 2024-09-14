@@ -26,6 +26,6 @@ mod tests {
     fn test_human_message_base_message_trait_methods() {
         let msg = ChatMessage::new("Hello, world!", "User".to_string());
         assert_eq!(msg.content(), "Hello, world!");
-        assert_eq!(msg.message_type(), MessageType::Chat);
+        assert_eq!(msg.message_type(), &MessageType::Chat);
     }
 }

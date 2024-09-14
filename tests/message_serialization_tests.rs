@@ -41,6 +41,7 @@ mod tests {
         {
             "content": "Hello, world!",
             "example": false,
+            "message_type": "Human",
             "additional_kwargs": {"key1": "value1"},
             "response_metadata": {"meta1": "metadata1"},
             "id": "12345",
@@ -92,6 +93,7 @@ mod tests {
         {
             "content": "Hello, empty fields!",
             "example": false,
+            "message_type": "Human",
             "id": null,
             "name": null
         }

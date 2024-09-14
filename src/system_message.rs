@@ -13,7 +13,7 @@ mod tests {
     fn test_systemmessage_creation() {
         let mut system_message = SystemMessage::new("This is a system message.");
         assert_eq!(system_message.content(), "This is a system message.");
-        assert_eq!(system_message.message_type(), MessageType::System);
+        assert_eq!(system_message.message_type(), &MessageType::System);
         assert!(!system_message.is_example());
         assert!(system_message.additional_kwargs().is_empty());
         assert!(system_message.response_metadata().is_empty());
@@ -74,6 +74,7 @@ mod tests {
         let expected_json = json!({
             "content": "This is a system message.",
             "example": false,
+            "message_type": "System",
             "role": "system",
         });
         let serialized = serde_json::to_string(&system_message).unwrap();
@@ -87,19 +88,20 @@ mod tests {
             "role": "system",
             "content": "This is a system message.",
             "example": false,
+            "message_type": "System"
         })
         .to_string();
 
         let system_message: SystemMessage = serde_json::from_str(&json_data).unwrap();
         assert_eq!(system_message.content(), "This is a system message.");
-        assert_eq!(system_message.message_type(), MessageType::System);
+        assert_eq!(system_message.message_type(), &MessageType::System);
     }
 
     #[test]
     fn test_systemmessage_debug_format() {
         let system_message = SystemMessage::new("Debug system message.");
         let debug_output = format!("{:?}", system_message);
-        let expected_debug_output = r#"SystemMessage { base: BaseMessageFields { content: "Debug system message.", example: false, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
+        let expected_debug_output = r#"SystemMessage { base: BaseMessageFields { content: "Debug system message.", example: false, message_type: System, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
         assert_eq!(debug_output, expected_debug_output);
     }
 
@@ -132,6 +134,7 @@ mod tests {
             "role": "system",
             "content": "This is a system message.",
             "example": false,
+            "message_type": "System",
             "id": "SYS123",
             "name": "System Bot",
             "additional_kwargs": {
