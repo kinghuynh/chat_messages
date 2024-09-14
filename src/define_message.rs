@@ -30,10 +30,6 @@ macro_rules! define_message {
                     }
                 }
 
-                pub fn content(&self) -> &str {
-                    &self.base.content
-                }
-
                 pub fn is_example(&self) -> bool {
                     self.base.example
                 }
@@ -52,10 +48,6 @@ macro_rules! define_message {
 
                 pub fn name(&self) -> Option<&str> {
                     self.base.name.as_deref()
-                }
-
-                pub fn message_type(&self) -> MessageType {
-                    $message_type_enum
                 }
 
                 pub fn set_content(&mut self, new_content: &str) {
