@@ -16,6 +16,20 @@ pub struct ToolMessage {
     base: BaseMessageFields,
 }
 
+impl ToolMessage {
+    pub fn tool_call_id(&self) -> &str {
+        &self.tool_call_id
+    }
+
+    pub fn artifact(&self) -> &Option<String> {
+        &self.artifact
+    }
+
+    pub fn status(&self) -> &ToolStatus {
+        &self.status
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

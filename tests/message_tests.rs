@@ -1,4 +1,4 @@
-use messageforge::prelude::*;
+use messageforge::{prelude::*, tool_message::ToolStatus};
 
 #[test]
 fn test_message_integration() {
@@ -37,4 +37,21 @@ fn test_message_integration() {
     let system_msg_debug_output = format!("{:?}", system_msg);
     let expected_system_msg_debug = r#"SystemMessage { base: BaseMessageFields { content: "System message content", example: false, message_type: System, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
     assert_eq!(system_msg_debug_output, expected_system_msg_debug);
+
+    let tool_msg = ToolMessage::new(
+        "This is a tool message",
+        "call_123".to_string(),
+        Some("artifact_abc".to_string()),
+        ToolStatus::Success,
+    );
+    assert_eq!(tool_msg.content(), "This is a tool message");
+    assert_eq!(tool_msg.tool_call_id(), "call_123");
+    assert_eq!(tool_msg.artifact(), &Some("artifact_abc".to_string()));
+    assert_eq!(tool_msg.status(), &ToolStatus::Success);
+    assert!(!tool_msg.is_example());
+    assert_eq!(tool_msg.message_type(), &MessageType::Tool);
+
+    let tool_msg_debug_output = format!("{:?}", tool_msg);
+    let expected_tool_msg_debug = r#"ToolMessage { tool_call_id: "call_123", artifact: Some("artifact_abc"), status: Success, base: BaseMessageFields { content: "This is a tool message", example: false, message_type: Tool, additional_kwargs: {}, response_metadata: {}, id: None, name: None } }"#;
+    assert_eq!(tool_msg_debug_output, expected_tool_msg_debug);
 }
