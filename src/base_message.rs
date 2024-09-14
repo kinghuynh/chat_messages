@@ -26,6 +26,7 @@ pub struct BaseMessageFields {
 pub trait BaseMessage {
     fn content(&self) -> &str;
     fn message_type(&self) -> crate::MessageType;
+    fn role(&self) -> &str;
 }
 
 impl Debug for dyn BaseMessage {
