@@ -119,7 +119,7 @@ mod tests {
             }
 
             fn message_type(&self) -> &MessageType {
-                self.base.message_type
+                &self.base.message_type
             }
 
             fn is_example(&self) -> bool {
