@@ -2,7 +2,7 @@ use crate::fields::{extract_fields, field_args, field_initializers};
 use crate::methods::{implement_base_getters, implement_base_setters};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{Data, DeriveInput, Error, Field, Fields, Ident};
+use syn::{DeriveInput, Error, Ident};
 
 fn has_role_field(input: &DeriveInput) -> bool {
     extract_fields(input)
@@ -15,22 +15,10 @@ fn has_role_field(input: &DeriveInput) -> bool {
         .unwrap_or(false)
 }
 
-fn add_role_field(input: &mut DeriveInput) {
-    let new_role_field: Field = syn::parse_quote! {
-        pub role: String
-    };
-
-    if let Data::Struct(ref mut data_struct) = input.data {
-        if let Fields::Named(ref mut fields_named) = data_struct.fields {
-            fields_named.named.push(new_role_field);
-        }
-    }
-}
-
-fn implement_struct_new(input: &DeriveInput, has_role: bool) -> Result<TokenStream2, Error> {
+fn implement_struct_new(input: &DeriveInput) -> Result<TokenStream2, Error> {
     let named_fields = extract_fields(input)?;
     let field_args = field_args(named_fields, &["base"]);
-    let mut field_initializers = field_initializers(named_fields, &["base"]);
+    let field_initializers = field_initializers(named_fields, &["base"]);
     let message_type_name = extract_message_type_name(input);
 
     let new_impl = quote! {
@@ -68,9 +56,10 @@ fn extract_message_type_name(input: &DeriveInput) -> Ident {
     format_ident!("{}", message_type_str)
 }
 
-fn implement_base_message(input: &DeriveInput, has_role: bool) -> TokenStream2 {
+fn implement_base_message(input: &DeriveInput) -> TokenStream2 {
     let struct_name = &input.ident;
     let getter_impl = implement_base_getters();
+    let has_role = has_role_field(input);
     let role_impl = if has_role {
         quote! {
             fn role(&self) -> &str {
@@ -93,45 +82,27 @@ fn implement_base_message(input: &DeriveInput, has_role: bool) -> TokenStream2 {
     }
 }
 
-pub fn derive_macro_with_role(input: TokenStream2, finished_impl: TokenStream2) -> TokenStream2 {
-    let mut ast: DeriveInput = match syn::parse2(input) {
-        Ok(ast) => ast,
-        Err(err) => return err.to_compile_error(),
-    };
-
-    add_role_field(&mut ast);
-    finished_impl
-}
-
 pub fn derive_macro(input: TokenStream2) -> TokenStream2 {
     let ast: DeriveInput = match syn::parse2(input) {
         Ok(ast) => ast,
         Err(err) => return err.to_compile_error(),
     };
 
-    let has_role = has_role_field(&ast);
-
     let struct_name = &ast.ident;
 
-    let struct_new_impl = match implement_struct_new(&ast, has_role) {
+    let struct_new_impl = match implement_struct_new(&ast) {
         Ok(impl_code) => impl_code,
         Err(err) => return err.to_compile_error(),
     };
 
     let base_setters = implement_base_setters();
-    let base_message_impl = implement_base_message(&ast, has_role);
-    let finished_impl = quote! {
+    let base_message_impl = implement_base_message(&ast);
+    quote! {
         impl #struct_name {
             #struct_new_impl
             #base_setters
         }
         #base_message_impl
-    };
-
-    if has_role {
-        derive_macro_with_role(quote! { #ast }, finished_impl)
-    } else {
-        finished_impl
     }
 }
 
@@ -141,7 +112,6 @@ mod tests {
     use quote::quote;
     use syn::{parse_quote, DeriveInput};
 
-    // A helper function that generates the common `BaseMessage` getters.
     fn base_message_impl_common() -> TokenStream2 {
         quote! {
             fn content(&self) -> &str {
@@ -174,7 +144,6 @@ mod tests {
         }
     }
 
-    // A helper function that generates the setters for `BaseMessage` fields.
     fn base_message_setters() -> TokenStream2 {
         quote! {
             pub fn set_content(&mut self, new_content: &str) {
