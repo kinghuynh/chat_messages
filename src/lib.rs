@@ -24,3 +24,6 @@ pub use system_message::SystemMessage;
 
 pub mod tool_message;
 // pub use tool_message::ToolMessage;
+
+pub mod message_enum;
+pub use message_enum::MessageEnum;

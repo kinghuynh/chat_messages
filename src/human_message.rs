@@ -5,7 +5,7 @@ define_message!(Human);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
+    use serde_json::{json, Value};
 
     define_message!(MessageType::Human);
 
@@ -74,25 +74,22 @@ mod tests {
         let expected_json = json!({
             "content": "This is a human message.",
             "example": false,
-            "message_type": "Human",
-            "role": "human",
+            "message_type": "Human"
         });
-        let serialized = serde_json::to_string(&human_message).unwrap();
-        let expected = expected_json.to_string();
-        assert_eq!(serialized, expected);
+
+        let serialized: Value = serde_json::to_value(&human_message).unwrap();
+        assert_eq!(serialized, expected_json);
     }
 
     #[test]
     fn test_humanmessage_deserialization() {
         let json_data = json!({
-            "role": "human",
             "content": "This is a human message.",
             "example": false,
-            "message_type": "Human",
-        })
-        .to_string();
+            "message_type": "Human"
+        });
 
-        let human_message: HumanMessage = serde_json::from_str(&json_data).unwrap();
+        let human_message: HumanMessage = serde_json::from_value(json_data).unwrap();
         assert_eq!(human_message.content(), "This is a human message.");
         assert_eq!(human_message.message_type(), &MessageType::Human);
     }
@@ -131,7 +128,6 @@ mod tests {
         );
 
         let expected_json = json!({
-            "role": "human",
             "content": "This is a human message.",
             "example": false,
             "message_type": "Human",
@@ -144,8 +140,8 @@ mod tests {
                 "platform": "mobile"
             }
         });
-        let serialized = serde_json::to_string(&human_message).unwrap();
-        let expected = expected_json.to_string();
-        assert_eq!(serialized, expected);
+
+        let serialized: Value = serde_json::to_value(&human_message).unwrap();
+        assert_eq!(serialized, expected_json);
     }
 }

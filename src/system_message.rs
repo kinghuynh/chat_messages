@@ -5,7 +5,7 @@ define_message!(System);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
+    use serde_json::{json, Value};
 
     define_message!(MessageType::System);
 
@@ -74,25 +74,22 @@ mod tests {
         let expected_json = json!({
             "content": "This is a system message.",
             "example": false,
-            "message_type": "System",
-            "role": "system",
+            "message_type": "System"
         });
-        let serialized = serde_json::to_string(&system_message).unwrap();
-        let expected = expected_json.to_string();
-        assert_eq!(serialized, expected);
+
+        let serialized: Value = serde_json::to_value(&system_message).unwrap();
+        assert_eq!(serialized, expected_json);
     }
 
     #[test]
     fn test_systemmessage_deserialization() {
         let json_data = json!({
-            "role": "system",
             "content": "This is a system message.",
             "example": false,
             "message_type": "System"
-        })
-        .to_string();
+        });
 
-        let system_message: SystemMessage = serde_json::from_str(&json_data).unwrap();
+        let system_message: SystemMessage = serde_json::from_value(json_data).unwrap();
         assert_eq!(system_message.content(), "This is a system message.");
         assert_eq!(system_message.message_type(), &MessageType::System);
     }
@@ -131,7 +128,6 @@ mod tests {
         );
 
         let expected_json = json!({
-            "role": "system",
             "content": "This is a system message.",
             "example": false,
             "message_type": "System",
@@ -144,8 +140,8 @@ mod tests {
                 "process": "systemd"
             }
         });
-        let serialized = serde_json::to_string(&system_message).unwrap();
-        let expected = expected_json.to_string();
-        assert_eq!(serialized, expected);
+
+        let serialized: Value = serde_json::to_value(&system_message).unwrap();
+        assert_eq!(serialized, expected_json);
     }
 }

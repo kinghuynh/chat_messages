@@ -5,7 +5,7 @@ define_message!(Ai);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
+    use serde_json::{json, Value};
 
     define_message!(MessageType::Ai);
 
@@ -74,25 +74,22 @@ mod tests {
         let expected_json = json!({
             "content": "This is an AI message.",
             "example": false,
-            "message_type": "Ai",
-            "role": "ai",
+            "message_type": "Ai"
         });
-        let serialized = serde_json::to_string(&ai_message).unwrap();
-        let expected = expected_json.to_string();
-        assert_eq!(serialized, expected);
+
+        let serialized: Value = serde_json::to_value(&ai_message).unwrap();
+        assert_eq!(serialized, expected_json);
     }
 
     #[test]
     fn test_aimessage_deserialization() {
         let json_data = json!({
-            "role": "ai",
             "content": "This is an AI message.",
             "example": false,
-            "message_type": "Ai",
-        })
-        .to_string();
+            "message_type": "Ai"
+        });
 
-        let ai_message: AiMessage = serde_json::from_str(&json_data).unwrap();
+        let ai_message: AiMessage = serde_json::from_value(json_data).unwrap();
         assert_eq!(ai_message.content(), "This is an AI message.");
         assert_eq!(ai_message.message_type(), &MessageType::Ai);
     }
@@ -131,7 +128,6 @@ mod tests {
         );
 
         let expected_json = json!({
-            "role": "ai",
             "content": "This is an AI message.",
             "example": false,
             "message_type": "Ai",
@@ -144,8 +140,8 @@ mod tests {
                 "model": "gpt-3"
             }
         });
-        let serialized = serde_json::to_string(&ai_message).unwrap();
-        let expected = expected_json.to_string();
-        assert_eq!(serialized, expected);
+
+        let serialized: Value = serde_json::to_value(&ai_message).unwrap();
+        assert_eq!(serialized, expected_json);
     }
 }

@@ -6,7 +6,7 @@ use std::{
 use crate::MessageType;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BaseMessageFields {
     pub content: String,
     pub example: bool,

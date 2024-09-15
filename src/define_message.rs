@@ -6,7 +6,7 @@ macro_rules! define_message {
 
     ($message_type_enum:expr) => {
         paste::item! {
-            #[derive(Debug, Deserialize)]
+            #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
             pub struct [<$message_type_enum Message>] {
                 #[serde(flatten)]
                 pub base: BaseMessageFields,
@@ -99,21 +99,6 @@ macro_rules! define_message {
 
                 fn name(&self) -> Option<&str> {
                     self.base.name.as_deref()
-                }
-            }
-
-            impl Serialize for [<$message_type_enum Message>] {
-                fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-                where
-                    S: serde::Serializer,
-                {
-                    let mut state = serde_json::Map::new();
-                    state.insert("role".to_string(), serde_json::Value::String(self.role().to_string()));
-                    let base_json = serde_json::to_value(&self.base).map_err(serde::ser::Error::custom)?;
-                    if let serde_json::Value::Object(map) = base_json {
-                        state.extend(map);
-                    }
-                    serde_json::Value::Object(state).serialize(serializer)
                 }
             }
         }
