@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::{AiMessage, HumanMessage, SystemMessage};
+use crate::{AiMessage, BaseMessageFields, HumanMessage, SystemMessage};
 use crate::{BaseMessage, MessageType};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Serialize, Clone, PartialEq)]
 #[serde(tag = "role", rename_all = "lowercase")] // Automatically uses "role" field for dispatch
 pub enum MessageEnum {
     Ai(AiMessage),
@@ -104,6 +104,50 @@ impl From<SystemMessage> for MessageEnum {
 impl From<HumanMessage> for MessageEnum {
     fn from(message: HumanMessage) -> Self {
         MessageEnum::Human(message)
+    }
+}
+
+impl<'de> Deserialize<'de> for MessageEnum {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct TempMessage {
+            role: String,
+            content: String,
+            #[serde(default)]
+            example: bool,
+            #[serde(default)]
+            additional_kwargs: HashMap<String, String>,
+            #[serde(default)]
+            response_metadata: HashMap<String, String>,
+            #[serde(default)]
+            id: Option<String>,
+            #[serde(default)]
+            name: Option<String>,
+        }
+
+        let temp = TempMessage::deserialize(deserializer)?;
+        let message_type =
+            MessageType::try_from(temp.role.as_str()).map_err(serde::de::Error::custom)?;
+
+        let base = BaseMessageFields {
+            content: temp.content,
+            example: temp.example,
+            additional_kwargs: temp.additional_kwargs,
+            response_metadata: temp.response_metadata,
+            id: temp.id,
+            name: temp.name,
+            message_type,
+        };
+
+        match message_type {
+            MessageType::Ai => Ok(MessageEnum::Ai(AiMessage { base })),
+            MessageType::Human => Ok(MessageEnum::Human(HumanMessage { base })),
+            MessageType::System => Ok(MessageEnum::System(SystemMessage { base })),
+            _ => Err(serde::de::Error::custom("Unsupported message type")),
+        }
     }
 }
 
@@ -414,5 +458,53 @@ mod tests {
         } else {
             panic!("Expected HumanMessage");
         }
+    }
+
+    #[test]
+    fn test_message_enum_deserialization_with_defaults() {
+        let json_data = json!({
+            "role": "ai",
+            "content": "Hello, AI."
+        })
+        .to_string();
+
+        let message_enum: MessageEnum = serde_json::from_str(&json_data).unwrap();
+
+        match message_enum {
+            MessageEnum::Ai(ai_message) => {
+                assert_eq!(ai_message.base.content, "Hello, AI.");
+                assert_eq!(ai_message.base.message_type, MessageType::Ai);
+                assert!(!ai_message.base.example);
+            }
+            _ => panic!("Expected AiMessage"),
+        }
+    }
+
+    #[test]
+    fn test_message_enum_serialization_with_message_type() {
+        let ai_message = AiMessage {
+            base: BaseMessageFields {
+                content: "Hello from AI.".to_string(),
+                example: false,
+                additional_kwargs: HashMap::new(),
+                response_metadata: HashMap::new(),
+                id: None,
+                name: None,
+                message_type: MessageType::Ai, // message_type is now part of serialization
+            },
+        };
+
+        let message_enum = MessageEnum::Ai(ai_message);
+
+        let expected_json = json!({
+            "role": "ai",
+            "content": "Hello from AI.",
+            "example": false,
+            "message_type": "Ai"
+        });
+
+        let serialized = serde_json::to_string(&message_enum).unwrap();
+        let actual_json: Value = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(actual_json, expected_json);
     }
 }

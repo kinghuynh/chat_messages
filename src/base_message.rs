@@ -9,7 +9,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BaseMessageFields {
     pub content: String,
+
+    #[serde(default)]
     pub example: bool,
+
     pub message_type: MessageType,
 
     #[serde(skip_serializing_if = "HashMap::is_empty", default)]
