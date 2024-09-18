@@ -13,6 +13,32 @@ pub enum MessageEnum {
     System(SystemMessage),
 }
 
+impl MessageEnum {
+    pub fn as_human(&self) -> Option<&HumanMessage> {
+        if let MessageEnum::Human(ref message) = self {
+            Some(message)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ai(&self) -> Option<&AiMessage> {
+        if let MessageEnum::Ai(ref message) = self {
+            Some(message)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_system(&self) -> Option<&SystemMessage> {
+        if let MessageEnum::System(ref message) = self {
+            Some(message)
+        } else {
+            None
+        }
+    }
+}
+
 impl BaseMessage for MessageEnum {
     fn content(&self) -> &str {
         match self {
@@ -506,5 +532,139 @@ mod tests {
         let serialized = serde_json::to_string(&message_enum).unwrap();
         let actual_json: Value = serde_json::from_str(&serialized).unwrap();
         assert_eq!(actual_json, expected_json);
+    }
+
+    #[test]
+    fn test_as_human() {
+        let human_message = HumanMessage {
+            base: BaseMessageFields {
+                content: "Hello from Human.".to_string(),
+                example: false,
+                message_type: MessageType::Human,
+                additional_kwargs: HashMap::new(),
+                response_metadata: HashMap::new(),
+                id: None,
+                name: None,
+            },
+        };
+
+        let message_enum = MessageEnum::Human(human_message.clone());
+
+        // Test valid HumanMessage
+        assert!(message_enum.as_human().is_some());
+        let extracted_message = message_enum.as_human().unwrap();
+        assert_eq!(extracted_message.content(), "Hello from Human.");
+
+        // Ensure invalid cast returns None
+        assert!(message_enum.as_ai().is_none());
+        assert!(message_enum.as_system().is_none());
+    }
+
+    #[test]
+    fn test_as_ai() {
+        let ai_message = AiMessage {
+            base: BaseMessageFields {
+                content: "Hello from AI.".to_string(),
+                example: false,
+                message_type: MessageType::Ai,
+                additional_kwargs: HashMap::new(),
+                response_metadata: HashMap::new(),
+                id: None,
+                name: None,
+            },
+        };
+
+        let message_enum = MessageEnum::Ai(ai_message.clone());
+
+        // Test valid AiMessage
+        assert!(message_enum.as_ai().is_some());
+        let extracted_message = message_enum.as_ai().unwrap();
+        assert_eq!(extracted_message.content(), "Hello from AI.");
+
+        // Ensure invalid cast returns None
+        assert!(message_enum.as_human().is_none());
+        assert!(message_enum.as_system().is_none());
+    }
+
+    #[test]
+    fn test_as_system() {
+        let system_message = SystemMessage {
+            base: BaseMessageFields {
+                content: "This is a system message.".to_string(),
+                example: false,
+                message_type: MessageType::System,
+                additional_kwargs: HashMap::new(),
+                response_metadata: HashMap::new(),
+                id: None,
+                name: None,
+            },
+        };
+
+        let message_enum = MessageEnum::System(system_message.clone());
+
+        // Test valid SystemMessage
+        assert!(message_enum.as_system().is_some());
+        let extracted_message = message_enum.as_system().unwrap();
+        assert_eq!(extracted_message.content(), "This is a system message.");
+
+        // Ensure invalid cast returns None
+        assert!(message_enum.as_human().is_none());
+        assert!(message_enum.as_ai().is_none());
+    }
+
+    #[test]
+    fn test_mixed_message_enum() {
+        let human_message = HumanMessage {
+            base: BaseMessageFields {
+                content: "Hello from Human.".to_string(),
+                example: false,
+                message_type: MessageType::Human,
+                additional_kwargs: HashMap::new(),
+                response_metadata: HashMap::new(),
+                id: None,
+                name: None,
+            },
+        };
+
+        let system_message = SystemMessage {
+            base: BaseMessageFields {
+                content: "System message.".to_string(),
+                example: false,
+                message_type: MessageType::System,
+                additional_kwargs: HashMap::new(),
+                response_metadata: HashMap::new(),
+                id: None,
+                name: None,
+            },
+        };
+
+        let ai_message = AiMessage {
+            base: BaseMessageFields {
+                content: "Hello from AI.".to_string(),
+                example: false,
+                message_type: MessageType::Ai,
+                additional_kwargs: HashMap::new(),
+                response_metadata: HashMap::new(),
+                id: None,
+                name: None,
+            },
+        };
+
+        let message_enum_human = MessageEnum::Human(human_message.clone());
+        let message_enum_system = MessageEnum::System(system_message.clone());
+        let message_enum_ai = MessageEnum::Ai(ai_message.clone());
+
+        // Ensure each function returns the correct type and None for others
+        assert!(message_enum_human.as_human().is_some());
+        assert!(message_enum_human.as_ai().is_none());
+        assert!(message_enum_human.as_system().is_none());
+
+        assert!(message_enum_system.as_system().is_some());
+        assert!(message_enum_system.as_human().is_none());
+        assert!(message_enum_system.as_ai().is_none());
+
+        assert!(message_enum_ai.as_ai().is_some());
+        assert!(message_enum_ai.as_human().is_none());
+        assert!(message_enum_ai.as_system().is_none());
     }
 }
