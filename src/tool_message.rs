@@ -1,13 +1,13 @@
 use crate::prelude::*;
 use derive_base_message::BaseMessage;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum ToolStatus {
     Success,
     Error,
 }
 
-#[derive(BaseMessage, Debug, Serialize, Deserialize)]
+#[derive(BaseMessage, Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ToolMessage {
     tool_call_id: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -18,6 +18,20 @@ pub struct ToolMessage {
 }
 
 impl ToolMessage {
+    pub fn new_with_base(
+        tool_call_id: String,
+        artifact: Option<String>,
+        status: ToolStatus,
+        base: BaseMessageFields,
+    ) -> Self {
+        ToolMessage {
+            tool_call_id,
+            artifact,
+            status,
+            base,
+        }
+    }
+
     pub fn tool_call_id(&self) -> &str {
         &self.tool_call_id
     }
@@ -119,6 +133,7 @@ mod tests {
         );
         assert_eq!(tool_message.base.id.as_deref(), Some("1234"));
         assert_eq!(tool_message.base.name.as_deref(), Some("Tool Name"));
+        assert_eq!(tool_message.role(), MessageType::Tool.as_str());
     }
 
     #[test]
