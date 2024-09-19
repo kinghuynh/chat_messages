@@ -1,16 +1,18 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::{AiMessage, BaseMessageFields, HumanMessage, SystemMessage};
+use crate::tool_message::ToolStatus;
+use crate::{AiMessage, BaseMessageFields, HumanMessage, SystemMessage, ToolMessage};
 use crate::{BaseMessage, MessageType};
 use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Serialize, Clone, PartialEq)]
-#[serde(tag = "role", rename_all = "lowercase")] // Automatically uses "role" field for dispatch
+#[serde(tag = "role", rename_all = "lowercase")]
 pub enum MessageEnum {
     Ai(AiMessage),
     Human(HumanMessage),
     System(SystemMessage),
+    Tool(ToolMessage),
 }
 
 impl MessageEnum {
@@ -37,6 +39,14 @@ impl MessageEnum {
             None
         }
     }
+
+    pub fn as_tool(&self) -> Option<&ToolMessage> {
+        if let MessageEnum::Tool(ref message) = self {
+            Some(message)
+        } else {
+            None
+        }
+    }
 }
 
 impl BaseMessage for MessageEnum {
@@ -45,6 +55,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(message) => message.content(),
             MessageEnum::Human(message) => message.content(),
             MessageEnum::System(message) => message.content(),
+            MessageEnum::Tool(message) => message.content(),
         }
     }
 
@@ -53,6 +64,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(message) => message.message_type(),
             MessageEnum::Human(message) => message.message_type(),
             MessageEnum::System(message) => message.message_type(),
+            MessageEnum::Tool(message) => message.message_type(),
         }
     }
 
@@ -61,6 +73,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(_) => "ai",
             MessageEnum::Human(_) => "human",
             MessageEnum::System(_) => "system",
+            MessageEnum::Tool(_) => "tool",
         }
     }
 
@@ -69,6 +82,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(message) => message.name(),
             MessageEnum::Human(message) => message.name(),
             MessageEnum::System(message) => message.name(),
+            MessageEnum::Tool(message) => message.name(),
         }
     }
 
@@ -77,6 +91,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(message) => message.is_example(),
             MessageEnum::Human(message) => message.is_example(),
             MessageEnum::System(message) => message.is_example(),
+            MessageEnum::Tool(message) => message.is_example(),
         }
     }
 
@@ -85,6 +100,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(message) => message.additional_kwargs(),
             MessageEnum::Human(message) => message.additional_kwargs(),
             MessageEnum::System(message) => message.additional_kwargs(),
+            MessageEnum::Tool(message) => message.additional_kwargs(),
         }
     }
 
@@ -93,6 +109,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(message) => message.response_metadata(),
             MessageEnum::Human(message) => message.response_metadata(),
             MessageEnum::System(message) => message.response_metadata(),
+            MessageEnum::Tool(message) => message.response_metadata(),
         }
     }
 
@@ -101,6 +118,7 @@ impl BaseMessage for MessageEnum {
             MessageEnum::Ai(message) => message.id(),
             MessageEnum::Human(message) => message.id(),
             MessageEnum::System(message) => message.id(),
+            MessageEnum::Tool(message) => message.id(),
         }
     }
 }
@@ -111,6 +129,7 @@ impl fmt::Debug for MessageEnum {
             MessageEnum::Ai(message) => write!(f, "AiMessage({:?})", message),
             MessageEnum::Human(message) => write!(f, "HumanMessage({:?})", message),
             MessageEnum::System(message) => write!(f, "SystemMessage({:?})", message),
+            MessageEnum::Tool(message) => write!(f, "ToolMessage({:?})", message),
         }
     }
 }
@@ -133,6 +152,12 @@ impl From<HumanMessage> for MessageEnum {
     }
 }
 
+impl From<ToolMessage> for MessageEnum {
+    fn from(message: ToolMessage) -> Self {
+        MessageEnum::Tool(message)
+    }
+}
+
 impl<'de> Deserialize<'de> for MessageEnum {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -152,6 +177,14 @@ impl<'de> Deserialize<'de> for MessageEnum {
             id: Option<String>,
             #[serde(default)]
             name: Option<String>,
+
+            // ToolMessage specific fields
+            #[serde(default)]
+            tool_call_id: Option<String>,
+            #[serde(default)]
+            artifact: Option<String>,
+            #[serde(default)]
+            status: Option<ToolStatus>,
         }
 
         let temp = TempMessage::deserialize(deserializer)?;
@@ -172,6 +205,20 @@ impl<'de> Deserialize<'de> for MessageEnum {
             MessageType::Ai => Ok(MessageEnum::Ai(AiMessage { base })),
             MessageType::Human => Ok(MessageEnum::Human(HumanMessage { base })),
             MessageType::System => Ok(MessageEnum::System(SystemMessage { base })),
+            MessageType::Tool => {
+                let tool_call_id = temp.tool_call_id.ok_or_else(|| {
+                    serde::de::Error::custom("Missing tool_call_id for ToolMessage")
+                })?;
+                let status = temp
+                    .status
+                    .ok_or_else(|| serde::de::Error::custom("Missing status for ToolMessage"))?;
+                Ok(MessageEnum::Tool(ToolMessage::new_with_base(
+                    tool_call_id,
+                    temp.artifact,
+                    status,
+                    base,
+                )))
+            }
             _ => Err(serde::de::Error::custom("Unsupported message type")),
         }
     }
@@ -269,6 +316,42 @@ mod tests {
     }
 
     #[test]
+    fn test_message_enum_serialization_tool_message() {
+        let base = BaseMessageFields {
+            content: "Tool message content".to_string(),
+            example: false,
+            message_type: MessageType::Tool,
+            additional_kwargs: HashMap::new(),
+            response_metadata: HashMap::new(),
+            id: None,
+            name: None,
+        };
+
+        let tool_message = ToolMessage::new_with_base(
+            "tool_call_001".to_string(),
+            Some("artifact_001".to_string()),
+            ToolStatus::Success,
+            base,
+        );
+
+        let message_enum = MessageEnum::Tool(tool_message);
+
+        let expected_json = json!({
+            "tool_call_id": "tool_call_001",
+            "artifact": "artifact_001",
+            "status": "Success",
+            "content": "Tool message content",
+            "example": false,
+            "role": "tool",
+            "message_type": "Tool"
+        });
+
+        let serialized = serde_json::to_string(&message_enum).unwrap();
+        let actual_json: Value = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(actual_json, expected_json);
+    }
+
+    #[test]
     fn test_message_enum_deserialization_ai_message() {
         let json_data = json!({
             "role": "ai",
@@ -325,6 +408,51 @@ mod tests {
                 assert_eq!(system_message.message_type(), &MessageType::System);
             }
             _ => panic!("Expected SystemMessage"),
+        }
+    }
+
+    #[test]
+    fn test_message_enum_tool_deserialization() {
+        let json_data = r#"
+    {
+        "role": "tool",
+        "content": "Tool message content",
+        "tool_call_id": "tool_call_001",
+        "status": "Success",
+        "artifact": "some_artifact",
+        "example": true,
+        "id": "tool_123",
+        "name": "Tool Example",
+        "additional_kwargs": {
+            "key": "value"
+        },
+        "response_metadata": {
+            "meta_key": "meta_value"
+        }
+    }
+    "#;
+
+        let message_enum: MessageEnum =
+            serde_json::from_str(json_data).expect("Deserialization failed");
+
+        if let MessageEnum::Tool(tool_message) = message_enum {
+            assert_eq!(tool_message.tool_call_id(), "tool_call_001");
+            assert_eq!(tool_message.artifact().as_deref(), Some("some_artifact"));
+            assert_eq!(tool_message.status(), &ToolStatus::Success);
+            assert_eq!(tool_message.content(), "Tool message content");
+            assert!(tool_message.is_example());
+            assert_eq!(tool_message.id(), Some("tool_123"));
+            assert_eq!(tool_message.name(), Some("Tool Example"));
+            assert_eq!(
+                tool_message.additional_kwargs().get("key").unwrap(),
+                "value"
+            );
+            assert_eq!(
+                tool_message.response_metadata().get("meta_key").unwrap(),
+                "meta_value"
+            );
+        } else {
+            panic!("Expected ToolMessage, got something else");
         }
     }
 
@@ -403,11 +531,18 @@ mod tests {
         let ai_message = AiMessage::new("Hello from AI.");
         let system_message = SystemMessage::new("System message.");
         let human_message = HumanMessage::new("Hello from Human.");
+        let tool_message = ToolMessage::new(
+            "Tool message content",
+            "tool_call_001".to_string(),
+            Some("artifact_001".to_string()),
+            ToolStatus::Success,
+        );
 
         let messages: Vec<MessageEnum> = vec![
             ai_message.into(),
             system_message.into(),
             human_message.into(),
+            tool_message.into(),
         ];
 
         let serialized = serde_json::to_value(&messages).unwrap();
@@ -430,6 +565,15 @@ mod tests {
                 "content": "Hello from Human.",
                 "example": false,
                 "message_type": "Human"
+            },
+            {
+                "tool_call_id": "tool_call_001",
+                "artifact": "artifact_001",
+                "status": "Success",
+                "content": "Tool message content",
+                "example": false,
+                "message_type": "Tool",
+                "role": "tool"
             }
         ]);
 
@@ -456,13 +600,22 @@ mod tests {
                 "content": "Hello from Human.",
                 "example": false,
                 "message_type": "Human"
+            },
+            {
+                "tool_call_id": "tool_call_001",
+                "artifact": "artifact_001",
+                "status": "Success",
+                "content": "Tool message content",
+                "example": false,
+                "message_type": "Tool",
+                "role": "tool"
             }
         ])
         .to_string();
 
         let messages: Vec<MessageEnum> = serde_json::from_str(&json_data).unwrap();
 
-        assert_eq!(messages.len(), 3);
+        assert_eq!(messages.len(), 4);
 
         if let MessageEnum::Ai(ai_message) = &messages[0] {
             assert_eq!(ai_message.content(), "Hello from AI.");
@@ -483,6 +636,15 @@ mod tests {
             assert_eq!(human_message.message_type(), &crate::MessageType::Human);
         } else {
             panic!("Expected HumanMessage");
+        }
+
+        if let MessageEnum::Tool(tool_message) = &messages[3] {
+            assert_eq!(tool_message.tool_call_id(), "tool_call_001");
+            assert_eq!(tool_message.artifact().as_deref(), Some("artifact_001"));
+            assert_eq!(tool_message.status(), &ToolStatus::Success);
+            assert_eq!(tool_message.content(), "Tool message content");
+        } else {
+            panic!("Expected ToolMessage");
         }
     }
 
@@ -613,6 +775,34 @@ mod tests {
     }
 
     #[test]
+    fn test_as_tool() {
+        let tool_message = ToolMessage::new(
+            "Tool message content",
+            "tool_call_001".to_string(),
+            Some("artifact_001".to_string()),
+            ToolStatus::Success,
+        );
+
+        let message_enum = MessageEnum::Tool(tool_message.clone());
+
+        // Test valid ToolMessage
+        assert!(message_enum.as_tool().is_some());
+        let extracted_message = message_enum.as_tool().unwrap();
+        assert_eq!(extracted_message.content(), "Tool message content");
+        assert_eq!(extracted_message.tool_call_id(), "tool_call_001");
+        assert_eq!(
+            extracted_message.artifact().as_deref(),
+            Some("artifact_001")
+        );
+        assert_eq!(extracted_message.status(), &ToolStatus::Success);
+
+        // Ensure invalid cast returns None
+        assert!(message_enum.as_human().is_none());
+        assert!(message_enum.as_ai().is_none());
+        assert!(message_enum.as_system().is_none());
+    }
+
+    #[test]
     fn test_mixed_message_enum() {
         let human_message = HumanMessage {
             base: BaseMessageFields {
@@ -650,21 +840,31 @@ mod tests {
             },
         };
 
+        let tool_message = ToolMessage::new(
+            "Tool message content",
+            "tool_call_001".to_string(),
+            Some("artifact_001".to_string()),
+            ToolStatus::Success,
+        );
+
         let message_enum_human = MessageEnum::Human(human_message.clone());
         let message_enum_system = MessageEnum::System(system_message.clone());
         let message_enum_ai = MessageEnum::Ai(ai_message.clone());
+        let message_enum_tool = MessageEnum::Tool(tool_message.clone());
 
         // Ensure each function returns the correct type and None for others
-        assert!(message_enum_human.as_human().is_some());
+        assert_eq!(message_enum_human.as_human().unwrap().role(), "human");
         assert!(message_enum_human.as_ai().is_none());
         assert!(message_enum_human.as_system().is_none());
 
-        assert!(message_enum_system.as_system().is_some());
+        assert_eq!(message_enum_system.as_system().unwrap().role(), "system");
         assert!(message_enum_system.as_human().is_none());
         assert!(message_enum_system.as_ai().is_none());
 
-        assert!(message_enum_ai.as_ai().is_some());
+        assert_eq!(message_enum_ai.as_ai().unwrap().role(), "ai");
         assert!(message_enum_ai.as_human().is_none());
         assert!(message_enum_ai.as_system().is_none());
+
+        assert_eq!(message_enum_tool.as_tool().unwrap().role(), "tool");
     }
 }
