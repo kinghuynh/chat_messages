@@ -23,11 +23,19 @@ impl MessageType {
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct InvalidMessageTypeError;
+pub struct InvalidMessageTypeError(String);
 
 impl fmt::Display for InvalidMessageTypeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Invalid message type")
+        write!(f, "Invalid message type: {}", self.0)
+    }
+}
+
+impl std::error::Error for InvalidMessageTypeError {}
+
+impl InvalidMessageTypeError {
+    pub fn new(msg: impl Into<String>) -> Self {
+        InvalidMessageTypeError(msg.into())
     }
 }
 
@@ -41,7 +49,10 @@ impl TryFrom<&str> for MessageType {
             "system" | "System" | "SystemMessage" => Ok(MessageType::System),
             "chat" | "Chat" | "ChatMessage" => Ok(MessageType::Chat),
             "tool" | "Tool" | "ToolMessage" => Ok(MessageType::Tool),
-            _ => Err(InvalidMessageTypeError),
+            _ => Err(InvalidMessageTypeError::new(format!(
+                "Invalid message type: {}",
+                s
+            ))),
         }
     }
 }
