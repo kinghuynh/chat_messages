@@ -49,6 +49,46 @@ impl MessageEnum {
             None
         }
     }
+
+    pub fn human_from(input: &str) -> Result<HumanMessage, InvalidMessageTypeError> {
+        match MessageEnum::try_from(input)? {
+            MessageEnum::Human(human_message) => Ok(human_message),
+            _ => Err(InvalidMessageTypeError::new(format!(
+                "Expected a HumanMessage, got a different type: {}",
+                input
+            ))),
+        }
+    }
+
+    pub fn ai_from(input: &str) -> Result<AiMessage, InvalidMessageTypeError> {
+        match MessageEnum::try_from(input)? {
+            MessageEnum::Ai(ai_message) => Ok(ai_message),
+            _ => Err(InvalidMessageTypeError::new(format!(
+                "Expected an AiMessage, got a different type: {}",
+                input
+            ))),
+        }
+    }
+
+    pub fn system_from(input: &str) -> Result<SystemMessage, InvalidMessageTypeError> {
+        match MessageEnum::try_from(input)? {
+            MessageEnum::System(system_message) => Ok(system_message),
+            _ => Err(InvalidMessageTypeError::new(format!(
+                "Expected a SystemMessage, got a different type: {}",
+                input
+            ))),
+        }
+    }
+
+    pub fn tool_from(input: &str) -> Result<ToolMessage, InvalidMessageTypeError> {
+        match MessageEnum::try_from(input)? {
+            MessageEnum::Tool(tool_message) => Ok(tool_message),
+            _ => Err(InvalidMessageTypeError::new(format!(
+                "Expected a ToolMessage, got a different type: {}",
+                input
+            ))),
+        }
+    }
 }
 
 impl BaseMessage for MessageEnum {
@@ -978,6 +1018,94 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Invalid message type: Invalid message format: Invalid format"
+        );
+    }
+
+    #[test]
+    fn test_human_from_success() {
+        let input = "Human: Hello from Human.";
+        let human_message = MessageEnum::human_from(input).unwrap();
+
+        assert_eq!(human_message.content(), "Hello from Human.");
+    }
+
+    #[test]
+    fn test_human_from_invalid_type() {
+        let input = "Ai: Hello from AI.";
+        let err = MessageEnum::human_from(input).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid message type: Expected a HumanMessage, got a different type: Ai: Hello from AI."
+        );
+    }
+
+    #[test]
+    fn test_ai_from_success() {
+        let input = "Ai: Hello from AI.";
+        let ai_message = MessageEnum::ai_from(input).unwrap();
+
+        assert_eq!(ai_message.content(), "Hello from AI.");
+    }
+
+    #[test]
+    fn test_ai_from_invalid_type() {
+        let input = "Human: Hello from Human.";
+        let err = MessageEnum::ai_from(input).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid message type: Expected an AiMessage, got a different type: Human: Hello from Human."
+        );
+    }
+
+    #[test]
+    fn test_system_from_success() {
+        let input = "System: System message content.";
+        let system_message = MessageEnum::system_from(input).unwrap();
+
+        assert_eq!(system_message.content(), "System message content.");
+    }
+
+    #[test]
+    fn test_system_from_invalid_type() {
+        let input = "Ai: System message content.";
+        let err = MessageEnum::system_from(input).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid message type: Expected a SystemMessage, got a different type: Ai: System message content."
+        );
+    }
+
+    #[test]
+    fn test_tool_from_success() {
+        let input = "Tool: tool_123: Tool message content.";
+        let tool_message = MessageEnum::tool_from(input).unwrap();
+
+        assert_eq!(tool_message.tool_call_id(), "tool_123");
+        assert_eq!(tool_message.content(), "Tool message content.");
+    }
+
+    #[test]
+    fn test_tool_from_invalid_type() {
+        let input = "Human: Tool message content.";
+        let err = MessageEnum::tool_from(input).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid message type: Expected a ToolMessage, got a different type: Human: Tool message content."
+        );
+    }
+
+    #[test]
+    fn test_tool_from_invalid_format() {
+        let input = "Tool: Invalid format";
+        let err = MessageEnum::tool_from(input).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid message type: Invalid tool message format: Tool: Invalid format"
         );
     }
 }
