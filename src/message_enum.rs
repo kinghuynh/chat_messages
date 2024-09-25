@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::tool_message::ToolStatus;
-use crate::{AiMessage, BaseMessageFields, HumanMessage, SystemMessage, ToolMessage};
+use crate::{
+    AiMessage, BaseMessageFields, HumanMessage, InvalidMessageTypeError, SystemMessage, ToolMessage,
+};
 use crate::{BaseMessage, MessageType};
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -220,6 +222,42 @@ impl<'de> Deserialize<'de> for MessageEnum {
                 )))
             }
             _ => Err(serde::de::Error::custom("Unsupported message type")),
+        }
+    }
+}
+
+impl TryFrom<&str> for MessageEnum {
+    type Error = InvalidMessageTypeError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        if let Some(stripped) = value.strip_prefix("Human: ") {
+            Ok(MessageEnum::Human(HumanMessage::new(stripped)))
+        } else if let Some(stripped) = value.strip_prefix("Ai: ") {
+            Ok(MessageEnum::Ai(AiMessage::new(stripped)))
+        } else if let Some(stripped) = value.strip_prefix("System: ") {
+            Ok(MessageEnum::System(SystemMessage::new(stripped)))
+        } else if let Some(stripped) = value.strip_prefix("Tool: ") {
+            let parts: Vec<&str> = stripped.splitn(2, ": ").collect();
+            if parts.len() == 2 {
+                let tool_id = parts[0].to_string();
+                let content = parts[1];
+                Ok(MessageEnum::Tool(ToolMessage::new(
+                    content,
+                    tool_id,
+                    None,
+                    ToolStatus::Success,
+                )))
+            } else {
+                Err(InvalidMessageTypeError::new(format!(
+                    "Invalid tool message format: {}",
+                    value
+                )))
+            }
+        } else {
+            Err(InvalidMessageTypeError::new(format!(
+                "Invalid message format: {}",
+                value
+            )))
         }
     }
 }
@@ -866,5 +904,80 @@ mod tests {
         assert!(message_enum_ai.as_system().is_none());
 
         assert_eq!(message_enum_tool.as_tool().unwrap().role(), "tool");
+    }
+
+    #[test]
+    fn test_try_from_human_message_success() {
+        let input = "Human: Hello from Human.";
+        let message_enum = MessageEnum::try_from(input).unwrap();
+
+        match message_enum {
+            MessageEnum::Human(human_message) => {
+                assert_eq!(human_message.content(), "Hello from Human.");
+            }
+            _ => panic!("Expected HumanMessage"),
+        }
+    }
+
+    #[test]
+    fn test_try_from_ai_message_success() {
+        let input = "Ai: Hello from AI.";
+        let message_enum = MessageEnum::try_from(input).unwrap();
+
+        match message_enum {
+            MessageEnum::Ai(ai_message) => {
+                assert_eq!(ai_message.content(), "Hello from AI.");
+            }
+            _ => panic!("Expected AiMessage"),
+        }
+    }
+
+    #[test]
+    fn test_try_from_system_message_success() {
+        let input = "System: System message content.";
+        let message_enum = MessageEnum::try_from(input).unwrap();
+
+        match message_enum {
+            MessageEnum::System(system_message) => {
+                assert_eq!(system_message.content(), "System message content.");
+            }
+            _ => panic!("Expected SystemMessage"),
+        }
+    }
+
+    #[test]
+    fn test_try_from_tool_message_success() {
+        let input = "Tool: tool_123: Tool message content.";
+        let message_enum = MessageEnum::try_from(input).unwrap();
+
+        match message_enum {
+            MessageEnum::Tool(tool_message) => {
+                assert_eq!(tool_message.tool_call_id(), "tool_123");
+                assert_eq!(tool_message.content(), "Tool message content.");
+            }
+            _ => panic!("Expected ToolMessage"),
+        }
+    }
+
+    #[test]
+    fn test_try_from_tool_message_invalid_format() {
+        let input = "Tool: Invalid tool format";
+        let err = MessageEnum::try_from(input).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid message type: Invalid tool message format: Tool: Invalid tool format"
+        );
+    }
+
+    #[test]
+    fn test_try_from_invalid_message_format() {
+        let input = "Invalid format";
+        let err = MessageEnum::try_from(input).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "Invalid message type: Invalid message format: Invalid format"
+        );
     }
 }
