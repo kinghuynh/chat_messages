@@ -270,34 +270,43 @@ impl TryFrom<&str> for MessageEnum {
     type Error = InvalidMessageTypeError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        if let Some(stripped) = value.strip_prefix("Human: ") {
-            Ok(MessageEnum::Human(HumanMessage::new(stripped)))
-        } else if let Some(stripped) = value.strip_prefix("Ai: ") {
-            Ok(MessageEnum::Ai(AiMessage::new(stripped)))
-        } else if let Some(stripped) = value.strip_prefix("System: ") {
-            Ok(MessageEnum::System(SystemMessage::new(stripped)))
-        } else if let Some(stripped) = value.strip_prefix("Tool: ") {
-            let parts: Vec<&str> = stripped.splitn(2, ": ").collect();
-            if parts.len() == 2 {
-                let tool_id = parts[0].to_string();
-                let content = parts[1];
-                Ok(MessageEnum::Tool(ToolMessage::new(
-                    content,
-                    tool_id,
-                    None,
-                    ToolStatus::Success,
-                )))
-            } else {
-                Err(InvalidMessageTypeError::new(format!(
-                    "Invalid tool message format: {}",
-                    value
-                )))
-            }
-        } else {
-            Err(InvalidMessageTypeError::new(format!(
+        let parts: Vec<&str> = value.splitn(2, ": ").collect();
+
+        if parts.len() != 2 {
+            return Err(InvalidMessageTypeError::new(format!(
                 "Invalid message format: {}",
                 value
-            )))
+            )));
+        }
+
+        let (role_part, content) = (parts[0], parts[1]);
+
+        match role_part.to_lowercase().as_str() {
+            "human" => Ok(MessageEnum::Human(HumanMessage::new(content))),
+            "ai" => Ok(MessageEnum::Ai(AiMessage::new(content))),
+            "system" => Ok(MessageEnum::System(SystemMessage::new(content))),
+            "tool" => {
+                let tool_parts: Vec<&str> = content.splitn(2, ": ").collect();
+                if tool_parts.len() == 2 {
+                    let tool_id = tool_parts[0].to_string();
+                    let tool_content = tool_parts[1];
+                    Ok(MessageEnum::Tool(ToolMessage::new(
+                        tool_content,
+                        tool_id,
+                        None,
+                        ToolStatus::Success,
+                    )))
+                } else {
+                    Err(InvalidMessageTypeError::new(format!(
+                        "Invalid tool message format: {}",
+                        value
+                    )))
+                }
+            }
+            _ => Err(InvalidMessageTypeError::new(format!(
+                "Invalid message type: {}",
+                value
+            ))),
         }
     }
 }
@@ -949,6 +958,16 @@ mod tests {
     #[test]
     fn test_try_from_human_message_success() {
         let input = "Human: Hello from Human.";
+        let message_enum = MessageEnum::try_from(input).unwrap();
+
+        match message_enum {
+            MessageEnum::Human(human_message) => {
+                assert_eq!(human_message.content(), "Hello from Human.");
+            }
+            _ => panic!("Expected HumanMessage"),
+        }
+
+        let input = "human: Hello from Human.";
         let message_enum = MessageEnum::try_from(input).unwrap();
 
         match message_enum {
