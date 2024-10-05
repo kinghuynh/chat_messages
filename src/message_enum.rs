@@ -108,6 +108,14 @@ impl MessageEnum {
             )))
         }
     }
+
+    pub fn parse_messages(input: &str) -> Result<Vec<MessageEnum>, InvalidMessageTypeError> {
+        input
+            .lines()
+            .filter(|line| !line.trim().is_empty()) // Filter out empty lines
+            .map(MessageEnum::try_from)
+            .collect()
+    }
 }
 
 impl BaseMessage for MessageEnum {
@@ -767,7 +775,7 @@ mod tests {
                 response_metadata: HashMap::new(),
                 id: None,
                 name: None,
-                message_type: MessageType::Ai, // message_type is now part of serialization
+                message_type: MessageType::Ai,
             },
         };
 
@@ -801,12 +809,10 @@ mod tests {
 
         let message_enum = MessageEnum::Human(human_message.clone());
 
-        // Test valid HumanMessage
         assert!(message_enum.as_human().is_some());
         let extracted_message = message_enum.as_human().unwrap();
         assert_eq!(extracted_message.content(), "Hello from Human.");
 
-        // Ensure invalid cast returns None
         assert!(message_enum.as_ai().is_none());
         assert!(message_enum.as_system().is_none());
     }
@@ -827,12 +833,10 @@ mod tests {
 
         let message_enum = MessageEnum::Ai(ai_message.clone());
 
-        // Test valid AiMessage
         assert!(message_enum.as_ai().is_some());
         let extracted_message = message_enum.as_ai().unwrap();
         assert_eq!(extracted_message.content(), "Hello from AI.");
 
-        // Ensure invalid cast returns None
         assert!(message_enum.as_human().is_none());
         assert!(message_enum.as_system().is_none());
     }
@@ -1128,5 +1132,126 @@ mod tests {
             err.to_string(),
             "Invalid message type: Invalid tool message format: Invalid format"
         );
+    }
+
+    #[test]
+    fn test_parse_valid_multi_line() {
+        let input =
+            "human: What is 2+2?\nai: 4\n\n\nhuman: What is 2+3?\nai: 5\n\nhuman: What is 4+4?";
+
+        let result = MessageEnum::parse_messages(input);
+        assert!(result.is_ok());
+        let messages = result.unwrap();
+
+        assert_eq!(messages.len(), 5);
+
+        if let MessageEnum::Human(human_message) = &messages[0] {
+            assert_eq!(human_message.content(), "What is 2+2?");
+        } else {
+            panic!("Expected HumanMessage for the first message");
+        }
+
+        if let MessageEnum::Ai(ai_message) = &messages[1] {
+            assert_eq!(ai_message.content(), "4");
+        } else {
+            panic!("Expected AiMessage for the second message");
+        }
+
+        if let MessageEnum::Human(human_message) = &messages[2] {
+            assert_eq!(human_message.content(), "What is 2+3?");
+        } else {
+            panic!("Expected HumanMessage for the third message");
+        }
+
+        if let MessageEnum::Ai(ai_message) = &messages[3] {
+            assert_eq!(ai_message.content(), "5");
+        } else {
+            panic!("Expected AiMessage for the fourth message");
+        }
+
+        if let MessageEnum::Human(human_message) = &messages[4] {
+            assert_eq!(human_message.content(), "What is 4+4?");
+        } else {
+            panic!("Expected HumanMessage for the fifth message");
+        }
+    }
+
+    #[test]
+    fn test_parse_with_empty_lines() {
+        let input = "\nhuman: What is 2+2?\n\n\nai: 4\n\nhuman: What is 4+4?\n\n";
+
+        let result = MessageEnum::parse_messages(input);
+        assert!(result.is_ok());
+        let messages = result.unwrap();
+
+        assert_eq!(messages.len(), 3);
+
+        if let MessageEnum::Human(human_message) = &messages[0] {
+            assert_eq!(human_message.content(), "What is 2+2?");
+        } else {
+            panic!("Expected HumanMessage for the first message");
+        }
+
+        if let MessageEnum::Ai(ai_message) = &messages[1] {
+            assert_eq!(ai_message.content(), "4");
+        } else {
+            panic!("Expected AiMessage for the second message");
+        }
+
+        if let MessageEnum::Human(human_message) = &messages[2] {
+            assert_eq!(human_message.content(), "What is 4+4?");
+        } else {
+            panic!("Expected HumanMessage for the third message");
+        }
+    }
+
+    #[test]
+    fn test_parse_invalid_message_format() {
+        let input = "unknown: What is 2+2?\nai: 4";
+
+        let result = MessageEnum::parse_messages(input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_mixed_valid_and_invalid_messages() {
+        let input = "human: What is 2+2?\ninvalid: format\nai: 4";
+
+        let result = MessageEnum::parse_messages(input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_only_valid_messages() {
+        let input = "human: What is 2+2?\nai: 4";
+
+        let result = MessageEnum::parse_messages(input);
+        assert!(result.is_ok());
+        let messages = result.unwrap();
+
+        assert_eq!(messages.len(), 2);
+
+        if let MessageEnum::Human(human_message) = &messages[0] {
+            assert_eq!(human_message.content(), "What is 2+2?");
+        } else {
+            panic!("Expected HumanMessage for the first message");
+        }
+
+        if let MessageEnum::Ai(ai_message) = &messages[1] {
+            assert_eq!(ai_message.content(), "4");
+        } else {
+            panic!("Expected AiMessage for the second message");
+        }
+    }
+
+    #[test]
+    fn test_parse_empty_input() {
+        let input = "";
+
+        let result = MessageEnum::parse_messages(input);
+        assert!(result.is_ok());
+        let messages = result.unwrap();
+
+        assert_eq!(messages.len(), 0);
     }
 }
