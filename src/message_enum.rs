@@ -89,6 +89,25 @@ impl MessageEnum {
             ))),
         }
     }
+
+    fn parse_tool_message(content: &str) -> Result<Self, InvalidMessageTypeError> {
+        let tool_parts: Vec<&str> = content.splitn(2, ": ").collect();
+        if tool_parts.len() == 2 {
+            let tool_id = tool_parts[0].to_string();
+            let tool_content = tool_parts[1];
+            Ok(MessageEnum::Tool(ToolMessage::new(
+                tool_content,
+                tool_id,
+                None,
+                ToolStatus::Success,
+            )))
+        } else {
+            Err(InvalidMessageTypeError::new(format!(
+                "Invalid tool message format: {}",
+                content
+            )))
+        }
+    }
 }
 
 impl BaseMessage for MessageEnum {
@@ -285,24 +304,7 @@ impl TryFrom<&str> for MessageEnum {
             "human" => Ok(MessageEnum::Human(HumanMessage::new(content))),
             "ai" => Ok(MessageEnum::Ai(AiMessage::new(content))),
             "system" => Ok(MessageEnum::System(SystemMessage::new(content))),
-            "tool" => {
-                let tool_parts: Vec<&str> = content.splitn(2, ": ").collect();
-                if tool_parts.len() == 2 {
-                    let tool_id = tool_parts[0].to_string();
-                    let tool_content = tool_parts[1];
-                    Ok(MessageEnum::Tool(ToolMessage::new(
-                        tool_content,
-                        tool_id,
-                        None,
-                        ToolStatus::Success,
-                    )))
-                } else {
-                    Err(InvalidMessageTypeError::new(format!(
-                        "Invalid tool message format: {}",
-                        value
-                    )))
-                }
-            }
+            "tool" => Self::parse_tool_message(content),
             _ => Err(InvalidMessageTypeError::new(format!(
                 "Invalid message type: {}",
                 value
@@ -1025,7 +1027,7 @@ mod tests {
 
         assert_eq!(
             err.to_string(),
-            "Invalid message type: Invalid tool message format: Tool: Invalid tool format"
+            "Invalid message type: Invalid tool message format: Invalid tool format"
         );
     }
 
@@ -1124,7 +1126,7 @@ mod tests {
 
         assert_eq!(
             err.to_string(),
-            "Invalid message type: Invalid tool message format: Tool: Invalid format"
+            "Invalid message type: Invalid tool message format: Invalid format"
         );
     }
 }
